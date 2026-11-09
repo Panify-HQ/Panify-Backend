@@ -1,14 +1,7 @@
-from enum import Enum
-from sqlalchemy import Enum as SAEnum, ForeignKey, Integer
+from sqlalchemy import Enum, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.infrastructure.database.base import Base
-
-
-class EstadoParada(str, Enum):
-    PENDIENTE = "PENDIENTE"
-    ENTREGADA = "ENTREGADA"
-    FALLIDA = "FALLIDA"
 
 
 class RutaParada(Base):
@@ -37,13 +30,7 @@ class RutaParada(Base):
         nullable=False
     )
 
-    estadoParada: Mapped[EstadoParada] = mapped_column(
-        SAEnum(
-            EstadoParada,
-            values_callable=lambda cls: [item.value for item in cls],
-            native_enum=False,
-            length=30,
-            name="estado_parada",
-        ),
+    estadoParada: Mapped[str] = mapped_column(
+        Enum("PENDIENTE", "ENTREGADA", "FALLIDA"),
         nullable=False
     )

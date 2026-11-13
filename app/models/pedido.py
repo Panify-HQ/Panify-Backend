@@ -1,7 +1,8 @@
 
 from sqlalchemy import Integer, DateTime, Enum, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.infrastructure.database.base import Base
+
 
 class Pedido(Base):
 
@@ -34,4 +35,14 @@ class Pedido(Base):
         ForeignKey("domiciliario.idDomiciliario"),
         nullable=True
     )
+
+    cliente: Mapped["Cliente"] = relationship(back_populates="pedidos")
+    domiciliario: Mapped["Domiciliario | None"] = relationship(
+        back_populates="pedidos"
+    )
+    detalles_pedido: Mapped[list["DetallePedido"]] = relationship(
+        back_populates="pedido"
+    )
+    recibos: Mapped[list["Recibos"]] = relationship(back_populates="pedido")
+    paradas_ruta: Mapped[list["RutaParada"]] = relationship(back_populates="pedido")
 

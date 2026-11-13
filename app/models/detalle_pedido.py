@@ -1,6 +1,6 @@
 from decimal import Decimal
 from sqlalchemy import Integer, Numeric, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.infrastructure.database.base import Base
 
 
@@ -27,5 +27,8 @@ class DetallePedido(Base):
 
     producto_idProducto: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("producto.idProducto")
+        ForeignKey("productos.idProducto")
     )
+
+    pedido: Mapped["Pedido"] = relationship(back_populates="detalles_pedido")
+    producto: Mapped["Productos"] = relationship(back_populates="detalles_pedido")

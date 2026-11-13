@@ -1,7 +1,8 @@
 
 from sqlalchemy import Integer, Enum
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.infrastructure.database.base import Base
+
 
 class Domiciliario(Base):
 
@@ -18,4 +19,10 @@ class Domiciliario(Base):
     estadoDisponibilidad: Mapped[str] = mapped_column(
         Enum("Disponible", "No disponible", "Ocupado"),
         nullable=False
+    )
+
+    usuarios: Mapped[list["Usuario"]] = relationship(back_populates="domiciliario")
+    pedidos: Mapped[list["Pedido"]] = relationship(back_populates="domiciliario")
+    rutas_entrega: Mapped[list["RutaEntrega"]] = relationship(
+        back_populates="domiciliario"
     )

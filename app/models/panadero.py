@@ -1,6 +1,7 @@
 from sqlalchemy import Integer, String, Enum
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.infrastructure.database.base import Base
+
 
 class Panadero(Base):
 
@@ -19,3 +20,6 @@ class Panadero(Base):
                nullable=False
            
     )
+
+    usuarios: Mapped[list["Usuario"]] = relationship(back_populates="panadero")
+    movimientos: Mapped[list["Movimientos"]] = relationship(back_populates="panadero")

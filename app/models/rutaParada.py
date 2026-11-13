@@ -1,5 +1,5 @@
 from sqlalchemy import Enum, ForeignKey, Integer
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
 
@@ -15,7 +15,7 @@ class RutaParada(Base):
 
     rutasEntrega_idRutasEntrega: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("rutasEntrega.idRutasEntrega", ondelete="CASCADE"),
+        ForeignKey("rutasentrega.idRutasEntrega", ondelete="CASCADE"),
         nullable=False
     )
 
@@ -34,3 +34,6 @@ class RutaParada(Base):
         Enum("PENDIENTE", "ENTREGADA", "FALLIDA"),
         nullable=False
     )
+
+    ruta_entrega: Mapped["RutaEntrega"] = relationship(back_populates="paradas")
+    pedido: Mapped["Pedido"] = relationship(back_populates="paradas_ruta")

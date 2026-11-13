@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Integer, Numeric, ForeignKey, DateTime, func
 from app.infrastructure.database.base import Base
 
@@ -17,3 +17,5 @@ class Recibos(Base):
     pedido_idPedido: Mapped[int] = mapped_column(
         Integer, ForeignKey("pedidos.idPedido")
     )
+
+    pedido: Mapped["Pedido"] = relationship(back_populates="recibos")

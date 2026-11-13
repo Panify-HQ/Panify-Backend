@@ -1,6 +1,7 @@
 from sqlalchemy import Integer, String, Enum, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.infrastructure.database.base import Base
+
 
 class Usuario(Base):
 
@@ -26,7 +27,7 @@ class Usuario(Base):
     # Llaves foráneas
     Rol_idRol: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("rol.idRol")
+        ForeignKey("rol.id")
     )
 
     cliente_idCliente: Mapped[int | None] = mapped_column(
@@ -37,7 +38,7 @@ class Usuario(Base):
 
     panadero_idPanadero: Mapped[int | None] = mapped_column(
         Integer,
-        ForeignKey("panadero.idPanadero"),
+        ForeignKey("panadero.id"),
         nullable=True
     )
 
@@ -45,4 +46,11 @@ class Usuario(Base):
         Integer,
         ForeignKey("domiciliario.idDomiciliario"),
         nullable=True
+    )
+
+    rol: Mapped["Rol"] = relationship(back_populates="usuarios")
+    cliente: Mapped["Cliente | None"] = relationship(back_populates="usuarios")
+    panadero: Mapped["Panadero | None"] = relationship(back_populates="usuarios")
+    domiciliario: Mapped["Domiciliario | None"] = relationship(
+        back_populates="usuarios"
     )

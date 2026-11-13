@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy import DateTime, Enum, ForeignKey, Integer, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
 
@@ -23,9 +23,12 @@ class Movimientos(Base):
     )
 
     panadero_idPanadero: Mapped[int] = mapped_column(
-        Integer, ForeignKey("panaderos.idPanadero", ondelete="CASCADE"), nullable=False
+        Integer, ForeignKey("panadero.id", ondelete="CASCADE"), nullable=False
     )
 
     producto_idProducto: Mapped[int] = mapped_column(
         Integer, ForeignKey("productos.idProducto", ondelete="CASCADE"), nullable=False
     )
+
+    panadero: Mapped["Panadero"] = relationship(back_populates="movimientos")
+    producto: Mapped["Productos"] = relationship(back_populates="movimientos")

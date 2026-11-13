@@ -1,4 +1,5 @@
-from sqlalchemy import Integer, String, Enum, ForeignKey
+
+from sqlalchemy import Integer, String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.infrastructure.database.base import Base
 
@@ -21,7 +22,7 @@ class Usuario(Base):
     contrasena: Mapped[str] = mapped_column("contraseña", String(255))
     telefono: Mapped[str] = mapped_column(String(15))
 
-    # Estado del usuario
+    # Estado
     estado: Mapped[str] = mapped_column(String(20))
 
     # Llaves foráneas
@@ -48,9 +49,8 @@ class Usuario(Base):
         nullable=True
     )
 
-    rol: Mapped["Rol"] = relationship(back_populates="usuarios")
-    cliente: Mapped["Cliente | None"] = relationship(back_populates="usuarios")
-    panadero: Mapped["Panadero | None"] = relationship(back_populates="usuarios")
-    domiciliario: Mapped["Domiciliario | None"] = relationship(
+    # Relación con Rol
+    rol: Mapped["Rol"] = relationship(
+        "Rol",
         back_populates="usuarios"
     )

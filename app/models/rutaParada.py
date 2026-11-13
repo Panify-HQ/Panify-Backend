@@ -15,7 +15,7 @@ class RutaParada(Base):
 
     rutasEntrega_idRutasEntrega: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("rutasentrega.idRutasEntrega", ondelete="CASCADE"),
+        ForeignKey("rutasEntrega.idRutasEntrega", ondelete="CASCADE"),
         nullable=False
     )
 

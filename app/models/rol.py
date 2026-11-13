@@ -1,4 +1,5 @@
-from sqlalchemy import Integer, String, Enum
+
+from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.infrastructure.database.base import Base
 
@@ -14,10 +15,11 @@ class Rol(Base):
         autoincrement=True
     )
 
-    # nombre
-    nombre: Mapped[str] = mapped_column(
-        String(45)
+    # Nombre
+    nombre: Mapped[str] = mapped_column(String(45))
+
+    # Relación con Usuario
+    usuarios: Mapped[list["Usuario"]] = relationship(
+        "Usuario",
+        back_populates="rol"
     )
-
-    usuarios: Mapped[list["Usuario"]] = relationship(back_populates="rol")
-

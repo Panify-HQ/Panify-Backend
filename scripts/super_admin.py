@@ -84,7 +84,7 @@ def crear_superadmin():
 
         if not rol_superadmin:
             print("No existe el rol Superadmin en la base de datos.")
-            print("Verifica los registros de la tabla rol.")
+            print("Verifica los registros de la tabla roles.")
             return
 
         datos = solicitar_datos()
@@ -110,7 +110,7 @@ def crear_superadmin():
             contrasena=contrasena_hash,
             telefono=datos["telefono"],
             estado="Activo",
-            Rol_idRol=rol_superadmin.id,
+            Rol_idRol=rol_superadmin.idRol,
         )
 
         db.add(nuevo_superadmin)

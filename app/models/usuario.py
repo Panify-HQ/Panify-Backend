@@ -1,55 +1,78 @@
 
-from sqlalchemy import Integer, String, ForeignKey
+from sqlalchemy import Integer, String, ForeignKey, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.infrastructure.database.base import Base
 
 
 class Usuario(Base):
 
-    __tablename__ = "usuario"
+    __tablename__ = "usuarios"
 
-    # Llave primaria
     idUsuario: Mapped[int] = mapped_column(
         Integer,
         primary_key=True,
         autoincrement=True
     )
 
-    # Datos personales
-    nombre: Mapped[str] = mapped_column(String(45))
-    apellido: Mapped[str] = mapped_column(String(45))
-    correo: Mapped[str] = mapped_column(String(150))
-    contrasena: Mapped[str] = mapped_column("contraseña", String(255))
-    telefono: Mapped[str] = mapped_column(String(15))
+    nombre: Mapped[str] = mapped_column(
+        String(45),
+        nullable=False
+    )
 
-    # Estado
-    estado: Mapped[str] = mapped_column(String(20))
+    apellido: Mapped[str] = mapped_column(
+        String(45),
+        nullable=False
+    )
 
-    # Llaves foráneas
+    correo: Mapped[str] = mapped_column(
+        String(150),
+        nullable=False,
+        unique=True
+    )
+
+    contrasena: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False
+    )
+
+    telefono: Mapped[str] = mapped_column(
+        String(15),
+        nullable=False
+    )
+
+    estado: Mapped[str] = mapped_column(
+        Enum("Activo", "Inactivo"),
+        nullable=False
+    )
+
     Rol_idRol: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("rol.id")
+        ForeignKey("roles.idRol"),
+        nullable=False
     )
 
     cliente_idCliente: Mapped[int | None] = mapped_column(
         Integer,
-        ForeignKey("cliente.idCliente"),
-        nullable=True
+        ForeignKey("clientes.idCliente"),
+        nullable=True,
+        unique=True
     )
 
     panadero_idPanadero: Mapped[int | None] = mapped_column(
         Integer,
-        ForeignKey("panadero.idPanadero"),
-        nullable=True
+        ForeignKey("panaderos.idPanadero"),
+        nullable=True,
+        unique=True
     )
 
     domiciliario_idDomiciliario: Mapped[int | None] = mapped_column(
         Integer,
-        ForeignKey("domiciliario.idDomiciliario"),
-        nullable=True
+        ForeignKey("domiciliarios.idDomiciliario"),
+        nullable=True,
+        unique=True
     )
 
-    # Relación con Rol
     rol: Mapped["Rol"] = relationship(
         "Rol",
         back_populates="usuarios"

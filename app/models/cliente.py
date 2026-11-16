@@ -1,31 +1,34 @@
+
 from sqlalchemy import Integer, String, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.infrastructure.database.base import Base
 
 
 class Cliente(Base):
 
-    __tablename__ = "cliente"
+    __tablename__ = "clientes"
 
-    # Llave primaria
     idCliente: Mapped[int] = mapped_column(
         Integer,
         primary_key=True,
-        autoincrement=True
+        autoincrement=False
     )
 
-    # Tipo de cliente
     tipoCliente: Mapped[str] = mapped_column(
-        Enum("Natural", "Jurídico"),
+        Enum("Nuevo", "Frecuente", "Ocasional"),
         nullable=False
     )
 
-    # Dirección del cliente
     direccion: Mapped[str] = mapped_column(
-        "dirección",
         String(150),
         nullable=False
     )
 
-    usuarios: Mapped[list["Usuario"]] = relationship(back_populates="cliente")
-    pedidos: Mapped[list["Pedido"]] = relationship(back_populates="cliente")
+    usuarios: Mapped[list["Usuario"]] = relationship(
+        back_populates="cliente"
+    )
+
+    pedidos: Mapped[list["Pedido"]] = relationship(
+        back_populates="cliente"
+    )

@@ -1,23 +1,26 @@
-from sqlalchemy import Integer, String, Enum
+
+from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.infrastructure.database.base import Base
 
 
 class Rol(Base):
 
-    __tablename__ = "rol"
+    __tablename__ = "roles"
 
-    # Llave primaria
-    id: Mapped[int] = mapped_column(
+    idRol: Mapped[int] = mapped_column(
         Integer,
         primary_key=True,
         autoincrement=True
     )
 
-    # nombre
     nombre: Mapped[str] = mapped_column(
-        String(45)
+        String(45),
+        nullable=False,
+        unique=True
     )
 
-    usuarios: Mapped[list["Usuario"]] = relationship(back_populates="rol")
-
+    usuarios: Mapped[list["Usuario"]] = relationship(
+        back_populates="rol"
+    )

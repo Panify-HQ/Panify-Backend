@@ -1,4 +1,3 @@
-
 from getpass import getpass
 
 from email_validator import validate_email, EmailNotValidError
@@ -68,9 +67,7 @@ def crear_superadmin():
     try:
         # Comprobar que no exista ya un Superadmin
         superadmin_existente = db.scalar(
-            select(Usuario)
-            .join(Usuario.rol)
-            .where(Rol.nombre == "Superadmin")
+            select(Usuario).join(Usuario.rol).where(Rol.nombre == "Superadmin")
         )
 
         if superadmin_existente:
@@ -78,22 +75,18 @@ def crear_superadmin():
             return
 
         # Buscar el rol Superadmin
-        rol_superadmin = db.scalar(
-            select(Rol).where(Rol.nombre == "Superadmin")
-        )
+        rol_superadmin = db.scalar(select(Rol).where(Rol.nombre == "Superadmin"))
 
         if not rol_superadmin:
             print("No existe el rol Superadmin en la base de datos.")
-            print("Verifica los registros de la tabla rol.")
+            print("Verifica los registros de la tabla roles.")
             return
 
         datos = solicitar_datos()
 
         # Comprobar que el correo no esté registrado
         usuario_existente = db.scalar(
-            select(Usuario).where(
-                Usuario.correo == datos["correo"]
-            )
+            select(Usuario).where(Usuario.correo == datos["correo"])
         )
 
         if usuario_existente:
@@ -110,7 +103,7 @@ def crear_superadmin():
             contrasena=contrasena_hash,
             telefono=datos["telefono"],
             estado="Activo",
-            Rol_idRol=rol_superadmin.id,
+            Rol_idRol=rol_superadmin.idRol,
         )
 
         db.add(nuevo_superadmin)

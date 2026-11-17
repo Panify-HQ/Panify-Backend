@@ -10,9 +10,7 @@ class DetallePedido(Base):
 
     # Llave primaria
     idDetalle_Pedido: Mapped[int] = mapped_column(
-        Integer,
-        primary_key=True,
-        autoincrement=True
+        Integer, primary_key=True, autoincrement=True
     )
 
     # Datos del detalle del pedido
@@ -21,13 +19,11 @@ class DetallePedido(Base):
 
     # Llaves foráneas
     pedido_idPedido: Mapped[int] = mapped_column(
-        Integer,
-        ForeignKey("pedidos.idPedido")
+        Integer, ForeignKey("pedidos.idPedido")
     )
 
     producto_idProducto: Mapped[int] = mapped_column(
-        Integer,
-        ForeignKey("productos.idProducto")
+        Integer, ForeignKey("productos.idProducto")
     )
 
     pedido: Mapped["Pedido"] = relationship(back_populates="detalles_pedido")

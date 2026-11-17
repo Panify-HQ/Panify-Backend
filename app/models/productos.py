@@ -44,4 +44,3 @@ class Productos(Base):
 
     def __str__(self):
         return f"Productos(idProducto={self.idProducto}, nombre={self.nombre}, precio={self.precio}, estado={self.estado}, descripcion={self.descripcion})"
-

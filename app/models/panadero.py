@@ -1,24 +1,18 @@
-from sqlalchemy import Integer, String, Enum
+from sqlalchemy import Integer, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.infrastructure.database.base import Base
 
 
 class Panadero(Base):
+    __tablename__ = "panaderos"
 
-    __tablename__ = "panadero"
-
-    # Llave primaria
-    id: Mapped[int] = mapped_column(
-        Integer,
-        primary_key=True,
-        autoincrement=True
+    idPanadero: Mapped[int] = mapped_column(
+        Integer, primary_key=True, autoincrement=True
     )
 
-    # nombre
     estadoActividad: Mapped[str] = mapped_column(
-        Enum("En Turno", "Descanso","Inactivo"),
-               nullable=False
-           
+        Enum("En Turno", "Descanso", "Inactivo"), nullable=False
     )
 
     usuarios: Mapped[list["Usuario"]] = relationship(back_populates="panadero")

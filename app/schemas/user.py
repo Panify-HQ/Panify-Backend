@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class UsuarioCrear(BaseModel):
@@ -20,3 +20,6 @@ class UsuarioRespuesta(BaseModel):
     Rol_idRol: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+UserResponse = UsuarioRespuesta

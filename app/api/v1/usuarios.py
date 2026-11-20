@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.infrastructure.database.session import get_db
 from app.models.rol import Rol
-from app.schemas.usuario import UsuarioCrear, UsuarioRespuesta
+from app.schemas.user import UsuarioCrear, UsuarioRespuesta
 from app.services.usuario_service import crear_usuario
 
 router = APIRouter(prefix="/usuarios", tags=["Usuarios"])

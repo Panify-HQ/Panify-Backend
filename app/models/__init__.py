@@ -7,6 +7,7 @@ from app.models.panaderos import Panadero
 from app.models.pedido import Pedido
 from app.models.productos import Productos
 from app.models.recibos import Recibos
+from app.models.revoked_token import RevokedToken
 from app.models.rol import Rol
 from app.models.rutaEntrega import RutaEntrega
 from app.models.rutaParada import RutaParada
@@ -22,6 +23,7 @@ __all__ = [
     "Pedido",
     "Productos",
     "Recibos",
+    "RevokedToken",
     "Rol",
     "RutaEntrega",
     "RutaParada",

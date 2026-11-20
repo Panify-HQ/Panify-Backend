@@ -16,6 +16,7 @@ from app.models import (
     Pedido,
     Productos,
     Recibos,
+    RevokedToken,
     Rol,
     RutaEntrega,
     RutaParada,

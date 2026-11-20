@@ -38,10 +38,10 @@ def solicitar_datos() -> dict:
         telefono = input("Teléfono: ").strip()
 
     while True:
-        contrasena = getpass("Contraseña (mínimo 12 caracteres): ")
+        contrasena = getpass("Contraseña (mínimo 8 caracteres): ")
 
-        if len(contrasena) < 12:
-            print("La contraseña debe tener al menos 12 caracteres.")
+        if len(contrasena) < 8:
+            print("La contraseña debe tener al menos 8 caracteres.")
             continue
 
         confirmacion = getpass("Confirma la contraseña: ")

@@ -11,8 +11,8 @@ password_hash = PasswordHash.recommended()
 def hash_password(password: str) -> str:
     """Genera un hash seguro de una contraseña."""
 
-    if len(password) < 12:
-        raise ValueError("La contraseña debe tener al menos 12 caracteres.")
+    if len(password) < 8:
+        raise ValueError("La contraseña debe tener al menos 8 caracteres.")
 
     return password_hash.hash(password)
 

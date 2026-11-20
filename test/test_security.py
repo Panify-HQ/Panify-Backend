@@ -1,7 +1,7 @@
 import pytest
 
 from app.core.security import hash_password, verify_password
-from app.schemas.usuario import UsuarioCrear
+from app.schemas.user import UsuarioCrear
 
 
 def test_hash_password_accepts_eight_characters():

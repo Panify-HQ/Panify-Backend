@@ -7,7 +7,7 @@ from app.infrastructure.database.base import Base
 from app.models.cliente import Cliente
 from app.models.rol import Rol
 from app.models.usuario import Usuario
-from app.schemas.usuario import UsuarioCrear
+from app.schemas.user import UsuarioCrear
 from app.services.usuario_service import crear_usuario
 from app.api.v1.usuarios import registrar_usuario
 

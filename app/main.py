@@ -17,13 +17,13 @@ def create_application() -> FastAPI:
         ),
     )
 
-    # Sin esto el navegador bloquea las peticiones del frontend (React + Vite)
+    # Permite que el frontend (React + Vite) consuma la API desde orígenes autorizados
     application.add_middleware(
         CORSMiddleware,
         allow_origins=settings.CORS_ORIGINS,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type"],
     )
 
     application.include_router(health_router)

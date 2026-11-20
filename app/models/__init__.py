@@ -3,7 +3,7 @@ from app.models.detalle_pedido import DetallePedido
 from app.models.domiciliario import Domiciliario
 from app.models.inventarios import Inventarios
 from app.models.movimientos import Movimientos
-from app.models.panadero import Panadero
+from app.models.panaderos import Panadero
 from app.models.pedido import Pedido
 from app.models.productos import Productos
 from app.models.recibos import Recibos

@@ -19,7 +19,7 @@ class RutaEntrega(Base):
 
     domiciliarios_idDomiciliario: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("domiciliario.idDomiciliario", ondelete="CASCADE"),
+        ForeignKey("domiciliarios.idDomiciliario", ondelete="CASCADE"),
         nullable=False,
     )
 

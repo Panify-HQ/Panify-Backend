@@ -7,11 +7,11 @@ class Cliente(Base):
     __tablename__ = "clientes"
 
     idCliente: Mapped[int] = mapped_column(
-        Integer, primary_key=True, autoincrement=True
+        Integer, primary_key=True, autoincrement=False
     )
 
     tipoCliente: Mapped[str] = mapped_column(
-        Enum("Natural", "Jurídico"), nullable=False
+        Enum("Nuevo", "Frecuente", "Ocasional"), nullable=False
     )
 
     direccion: Mapped[str] = mapped_column("dirección", String(150), nullable=False)

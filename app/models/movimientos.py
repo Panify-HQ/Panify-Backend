@@ -23,7 +23,7 @@ class Movimientos(Base):
     )
 
     panadero_idPanadero: Mapped[int] = mapped_column(
-        Integer, ForeignKey("panadero.id", ondelete="CASCADE"), nullable=False
+        Integer, ForeignKey("panaderos.idPanadero", ondelete="CASCADE"), nullable=False
     )
 
     producto_idProducto: Mapped[int] = mapped_column(

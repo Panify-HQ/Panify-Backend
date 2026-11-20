@@ -21,11 +21,11 @@ class Pedido(Base):
 
     # Llaves foráneas
     cliente_idCliente: Mapped[int] = mapped_column(
-        Integer, ForeignKey("cliente.idCliente")
+        Integer, ForeignKey("clientes.idCliente")
     )
 
     domiciliario_idDomiciliario: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("domiciliario.idDomiciliario"), nullable=True
+        Integer, ForeignKey("domiciliarios.idDomiciliario"), nullable=True
     )
 
     cliente: Mapped["Cliente"] = relationship(back_populates="pedidos")

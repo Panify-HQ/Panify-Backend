@@ -41,3 +41,15 @@ class Usuario(Base):
     )
 
     rol: Mapped["Rol"] = relationship("Rol", back_populates="usuarios")
+
+    cliente: Mapped["Cliente | None"] = relationship(
+        "Cliente", back_populates="usuarios"
+    )
+
+    panadero: Mapped["Panadero | None"] = relationship(
+        "Panadero", back_populates="usuarios"
+    )
+
+    domiciliario: Mapped["Domiciliario | None"] = relationship(
+        "Domiciliario", back_populates="usuarios"
+    )

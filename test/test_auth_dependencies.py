@@ -13,7 +13,7 @@ from app.api.v1.auth import logout
 from app.core.security import create_access_token, hash_password
 from app.infrastructure.database.base import Base
 from app.models.revoked_token import RevokedToken
-from app.models.rol import Rol
+from app.models.roles import Rol
 from app.models.usuario import Usuario
 
 
@@ -89,7 +89,7 @@ def test_logout_persists_revocation_and_blocks_the_same_token():
             nombre="Ana",
             apellido="Lopez",
             correo="ana@example.com",
-            contrasena=hash_password("Clave123"),
+            contrasena=hash_password("ClaveSegura12"),
             telefono="3001234567",
             estado="Activo",
             Rol_idRol=5,

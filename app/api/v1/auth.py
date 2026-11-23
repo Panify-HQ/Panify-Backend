@@ -1,20 +1,55 @@
 from datetime import datetime, timezone
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import HTTPAuthorizationCredentials
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import bearer_scheme, get_current_user
-from app.core.security import verify_access_token
+from app.core.config import settings
+from app.core.security import (
+    create_access_token,
+    verify_access_token,
+    verify_password,
+)
 from app.infrastructure.database.session import get_db
 from app.models.revoked_token import RevokedToken
 from app.models.usuario import Usuario
 from app.schemas.auth import LoginRequest, TokenResponse
 from app.schemas.user import UserResponse
-from app.services.auth_service import AuthenticationError, authenticate_user
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
+
+
+class AuthenticationError(Exception):
+    pass
+
+
+def authenticate_user(
+    db: Session,
+    email: str,
+    password: str,
+) -> tuple[str, int]:
+    user = db.scalar(
+        select(Usuario).where(Usuario.correo == email.strip().lower())
+    )
+
+    if user is None or not verify_password(password, user.contrasena):
+        raise AuthenticationError
+
+    if user.estado != "Activo":
+        raise AuthenticationError
+
+    expires_in = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    access_token = create_access_token(
+        {
+            "sub": str(user.idUsuario),
+            "jti": str(uuid4()),
+        }
+    )
+    return access_token, expires_in
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -27,11 +62,11 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
             email=str(data.email),
             password=data.password,
         )
-    except AuthenticationError:
+    except AuthenticationError as error:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Correo electrónico o contraseña incorrectos.",
-        )
+        ) from error
 
     return TokenResponse(access_token=access_token, expires_in=expires_in)
 

@@ -6,7 +6,7 @@ from sqlalchemy import select
 from app.core.security import hash_password
 from app.infrastructure.database.session import SessionLocal
 from app.models.usuario import Usuario
-from app.models.rol import Rol
+from app.models.roles import Rol
 
 
 def solicitar_datos() -> dict:

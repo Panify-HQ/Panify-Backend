@@ -53,3 +53,7 @@ class Usuario(Base):
     domiciliario: Mapped["Domiciliario | None"] = relationship(
         "Domiciliario", back_populates="usuarios"
     )
+
+    @property
+    def direccion(self) -> str | None:
+        return self.cliente.direccion if self.cliente is not None else None

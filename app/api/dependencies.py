@@ -27,11 +27,11 @@ def get_current_user(
     try:
         payload = verify_access_token(credentials.credentials)
         user_id = int(payload["sub"])
-        jti = payload["jti"]
+        token_id = payload["jti"]
     except (jwt.InvalidTokenError, ValueError, KeyError, TypeError):
         raise unauthorized
 
-    if db.get(RevokedToken, jti) is not None:
+    if not isinstance(token_id, str) or db.get(RevokedToken, token_id) is not None:
         raise unauthorized
 
     user = db.get(Usuario, user_id)

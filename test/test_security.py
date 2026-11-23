@@ -15,7 +15,7 @@ def test_hash_password_rejects_fewer_than_eight_characters():
         hash_password("Clave12")
 
 
-def test_usuario_schema_requires_eight_character_password():
+def test_usuario_schema_requires_twelve_character_password():
     user_data = {
         "nombre": "Ana",
         "apellido": "Lopez",
@@ -25,7 +25,7 @@ def test_usuario_schema_requires_eight_character_password():
     }
 
     with pytest.raises(ValueError):
-        UsuarioCrear(**user_data, contrasena="Clave12")
+        UsuarioCrear(**user_data, contrasena="Clave123456")
 
-    usuario = UsuarioCrear(**user_data, contrasena="Clave123")
-    assert usuario.contrasena == "Clave123"
+    usuario = UsuarioCrear(**user_data, contrasena="Clave1234567")
+    assert usuario.contrasena == "Clave1234567"

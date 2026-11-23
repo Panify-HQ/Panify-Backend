@@ -4,14 +4,14 @@ from unittest.mock import Mock
 import pytest
 
 from app.core.security import hash_password, verify_access_token
-from app.services.auth_service import AuthenticationError, authenticate_user
+from app.api.v1.auth import AuthenticationError, authenticate_user
 
 
 def make_user(**overrides):
     user = {
         "idUsuario": 12,
         "correo": "ana@example.com",
-        "contrasena": hash_password("Clave123"),
+        "contrasena": hash_password("ClaveSegura12"),
         "estado": "Activo",
     }
     user.update(overrides)
@@ -25,7 +25,7 @@ def test_authenticate_user_returns_jwt_without_persisting_session():
     token, expires_in = authenticate_user(
         db,
         email=" Ana@Example.com ",
-        password="Clave123",
+        password="ClaveSegura12",
     )
 
     payload = verify_access_token(token)
@@ -39,9 +39,9 @@ def test_authenticate_user_returns_jwt_without_persisting_session():
 @pytest.mark.parametrize(
     ("user", "password"),
     [
-        (None, "Clave123"),
+        (None, "ClaveSegura12"),
         (make_user(), "OtraClave"),
-        (make_user(estado="Inactivo"), "Clave123"),
+        (make_user(estado="Inactivo"), "ClaveSegura12"),
     ],
 )
 def test_authenticate_user_rejects_invalid_credentials_or_inactive_user(user, password):

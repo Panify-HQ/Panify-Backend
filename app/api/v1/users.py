@@ -16,6 +16,7 @@ from app.schemas.user import (
 from app.services.user_service import (
     UserAlreadyExistsError,
     UserNotFoundError,
+    UserPermissionError,
     UserRoleNotFoundError,
     UserService,
     UserServiceError,
@@ -142,25 +143,40 @@ def get_user(
 @router.patch(
     "/{user_id}",
     response_model=UserResponse,
-    dependencies=[Depends(require_super_admin)],
 )
 def update_user(
     user_id: int,
     data: UserUpdate,
     db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
 ):
     try:
-        return UserService.update_user(db, user_id, data)
+        return UserService.update_user(
+            db,
+            user_id,
+            data,
+            current_user=current_user,
+        )
     except UserNotFoundError as error:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(error),
         )
+    except UserPermissionError as error:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(error),
+        ) from error
     except UserAlreadyExistsError as error:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=str(error),
         )
+    except UserRoleNotFoundError as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(error),
+        ) from error
     except UserServiceError as error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

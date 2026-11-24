@@ -81,6 +81,7 @@ class UsuarioCrear(BaseModel):
         return self
 
 
+
 class UsuarioActualizar(BaseModel):
     nombre: str | None = Field(default=None, min_length=2, max_length=45)
     apellido: str | None = Field(default=None, min_length=2, max_length=45)
@@ -91,7 +92,10 @@ class UsuarioActualizar(BaseModel):
         max_length=13,
         pattern=r"^(?:\+?57)?3\d{9}$",
     )
-    direccion: str | None = Field(default=None, min_length=1, max_length=150)
+    direccion: str | None = Field(
+        default=None, min_length=1, max_length=150
+    )
+    rol: UserRole | None = None
 
 
 class UsuarioEstadoActualizar(BaseModel):

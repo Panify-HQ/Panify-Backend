@@ -170,7 +170,7 @@ class UserService:
                 raise UserServiceError("La dirección no puede ser nula ni vacía.")
             if user.cliente_idCliente is None:
                 raise UserServiceError(
-                    "Solo se puede actualizar la dirección de un cliente."
+                    "No se puede actualizar la direccion de ningun usuario."
                 )
             cliente = db.get(Cliente, user.cliente_idCliente)
             if cliente is None:

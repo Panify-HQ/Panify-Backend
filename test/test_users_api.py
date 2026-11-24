@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from pydantic import ValidationError
 
 from app.api.v1 import users
-from app.schemas.user import UsuarioEstadoActualizar
+from app.schemas.user import UserUpdate, UsuarioEstadoActualizar
 
 
 def test_user_routes_use_english_prefix():
@@ -31,6 +31,30 @@ def test_user_management_requires_superadmin():
         )
 
     assert error.value.status_code == 403
+
+
+def test_update_user_passes_authenticated_user_to_service(monkeypatch):
+    db = Mock()
+    current_user = SimpleNamespace(idUsuario=42)
+    data = UserUpdate(nombre="Ana")
+    expected_user = object()
+    update_user = Mock(return_value=expected_user)
+    monkeypatch.setattr(users.UserService, "update_user", update_user)
+
+    response = users.update_user(
+        user_id=17,
+        data=data,
+        db=db,
+        current_user=current_user,
+    )
+
+    assert response is expected_user
+    update_user.assert_called_once_with(
+        db,
+        17,
+        data,
+        current_user=current_user,
+    )
 
 
 @pytest.mark.parametrize(

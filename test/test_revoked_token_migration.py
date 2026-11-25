@@ -18,17 +18,19 @@ def load_migration(filename: str):
     return migration
 
 
-def test_revoked_token_migration_matches_models_and_downgrades():
-    initial = load_migration(
-        "89567ed79b5e_crear_esquema_inicial_completo.py"
-    )
+def test_latest_migrations_match_models_and_downgrade():
+    initial = load_migration("89567ed79b5e_crear_esquema_inicial_completo.py")
     revoked_tokens = load_migration("4f6c2a8d91b3_create_revoked_tokens.py")
+    receipt_migration = load_migration(
+        "1c8b7f4a2d90_update_order_states_and_receipts.py"
+    )
     engine = create_engine("sqlite:///:memory:")
 
     with engine.begin() as connection:
         with Operations.context(MigrationContext.configure(connection)):
             initial.upgrade()
             revoked_tokens.upgrade()
+            receipt_migration.upgrade()
 
         differences = compare_metadata(
             MigrationContext.configure(
@@ -41,6 +43,7 @@ def test_revoked_token_migration_matches_models_and_downgrades():
         assert "revoked_tokens" in inspect(connection).get_table_names()
 
         with Operations.context(MigrationContext.configure(connection)):
+            receipt_migration.downgrade()
             revoked_tokens.downgrade()
             initial.downgrade()
 

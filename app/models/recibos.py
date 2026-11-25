@@ -15,7 +15,7 @@ class Recibos(Base):
     fechaEmision: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     pedido_idPedido: Mapped[int] = mapped_column(
-        Integer, ForeignKey("pedidos.idPedido")
+        Integer, ForeignKey("pedidos.idPedido"), unique=True, nullable=False
     )
 
-    pedido: Mapped["Pedido"] = relationship(back_populates="recibos")
+    pedido: Mapped["Pedido"] = relationship(back_populates="recibo")

@@ -16,7 +16,14 @@ class Pedido(Base):
 
     # Estado del pedido
     estadoPedido: Mapped[str] = mapped_column(
-        Enum("preparacion", "en_camino", "entregado", "cancelado")
+        Enum(
+            "Pendiente",
+            "En preparación",
+            "Listo",
+            "En camino",
+            "Entregado",
+            "Cancelado",
+        )
     )
 
     # Llaves foráneas
@@ -33,5 +40,7 @@ class Pedido(Base):
     detalles_pedido: Mapped[list["DetallePedido"]] = relationship(
         back_populates="pedido"
     )
-    recibos: Mapped[list["Recibos"]] = relationship(back_populates="pedido")
+    recibo: Mapped["Recibos | None"] = relationship(
+        back_populates="pedido", uselist=False
+    )
     paradas_ruta: Mapped[list["RutaParada"]] = relationship(back_populates="pedido")

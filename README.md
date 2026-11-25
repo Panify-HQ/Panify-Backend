@@ -59,7 +59,7 @@ Proveer la lógica de negocio, las reglas de validación y la persistencia que n
 - **Tablas y migraciones:** las tablas se definen como modelos con **SQLAlchemy** y se crean mediante **Alembic**.
 - **Control de acceso:** especialización de `USUARIO` en `CLIENTE`, `DOMICILIARIO` y `PANADERO`.
 - **Entidades principales:** `USUARIO`, `CLIENTE`, `DOMICILIARIO`, `PANADERO`, `DIRECCION`, `PRODUCTO`, `PEDIDO`, `DETALLE_PEDIDO`, `RECIBO`.
-- **Valores derivados (calculados, no almacenados):** total a pagar, subtotal y estado de stock.
+- **Valores derivados:** subtotal y estado de stock. El total del recibo se calcula con precios congelados y se persiste al emitirlo.
 
 ---
 
@@ -77,7 +77,18 @@ Proveer la lógica de negocio, las reglas de validación y la persistencia que n
 | Pruebas                    | Pytest + HTTPX               |
 | Control de versiones       | Git y GitHub                 |
 
-**Pendiente por definir:** mecanismo de autenticación y manejo de sesiones, cifrado de contraseñas, librería para generar recibos en PDF y estrategia de despliegue.
+**Pendiente por definir:** estrategia de despliegue.
+
+## 🧾 Recibos MVP
+
+| Método | Endpoint | Función |
+| ------ | -------- | ------- |
+| `POST` | `/api/v1/orders/{order_id}/confirm` | Confirma un pedido `Pendiente` como `En preparación` y genera su único recibo. |
+| `GET` | `/api/v1/receipts?search=&page=1&page_size=20` | Lista recibos visibles, con búsqueda por recibo, pedido o nombre del cliente y paginación. |
+| `GET` | `/api/v1/receipts/{receipt_id}` | Consulta el detalle del recibo, cliente y productos con precios congelados. |
+| `GET` | `/api/v1/receipts/{receipt_id}/pdf` | Descarga el comprobante PDF generado desde los datos almacenados. |
+
+La búsqueda admite hasta 100 caracteres; `page` y `page_size` deben ser enteros positivos. El listado y el detalle se limitan según el rol: Cliente (solo propios), Administrador/Superadmin (todos), Domiciliario (pedidos asignados). Panadero puede confirmar pedidos, pero no consultar ni descargar recibos. La fecha de emisión se asigna en el servidor.
 
 ---
 

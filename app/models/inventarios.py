@@ -1,5 +1,5 @@
 from sqlalchemy import ForeignKey, Integer
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
 
@@ -18,3 +18,5 @@ class Inventarios(Base):
     producto_idProducto: Mapped[int] = mapped_column(
         Integer, ForeignKey("productos.idProducto", ondelete="CASCADE"), nullable=False
     )
+
+    producto: Mapped["Productos"] = relationship(back_populates="inventarios")

@@ -4,6 +4,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.health import router as health_router
 from app.api.v1.router import api_router
 from app.core.config import settings
+from fastapi import Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+
+from app.api.v1 import inventario
+from app.services.inventario_service import InventarioError
 
 
 def create_application() -> FastAPI:
@@ -33,3 +40,15 @@ def create_application() -> FastAPI:
 
 
 app = create_application()
+
+
+
+@app.exception_handler(InventarioError)
+async def inventario_error(request: Request, exc: InventarioError):
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+@app.exception_handler(RequestValidationError)
+async def errores_validacion(request: Request, exc: RequestValidationError):
+    return JSONResponse(status_code=400, content={"detail": jsonable_encoder(exc.errors())})
+
+app.include_router(inventario.router)

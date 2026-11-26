@@ -147,6 +147,37 @@ def add_order(
     return order
 
 
+def test_admin_can_create_order_for_customer(db, monkeypatch):
+    now = datetime(2026, 11, 24, 10, 0)
+    admin = add_user(
+        db,
+        user_id=22,
+        role_id=1,
+        role_name=UserRole.ADMINISTRADOR.value,
+    )
+    add_user(
+        db,
+        user_id=23,
+        role_id=5,
+        role_name=UserRole.CLIENTE.value,
+        customer_id=10,
+    )
+    add_product(db, stocks=(5,))
+    db.commit()
+    monkeypatch.setattr(OrderService, "_now", staticmethod(lambda: now))
+    data = OrderCreate(
+        cliente_idCliente=10,
+        listaProductos=[OrderProductCreate(idProducto=1, cantidad=2)],
+        fechaHoraEntregaEstimada=now + timedelta(hours=2),
+    )
+
+    response = OrderService.create_order(db, data, admin)
+
+    assert response["estadoPedido"] == OrderState.PENDIENTE.value
+    saved_order = db.get(Pedido, response["idPedido"])
+    assert saved_order.cliente_idCliente == 10
+
+
 def test_create_order_freezes_price_and_consumes_combined_inventory(db, monkeypatch):
     now = datetime(2026, 11, 24, 10, 0)
     customer = add_user(

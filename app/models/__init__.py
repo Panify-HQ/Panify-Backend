@@ -12,7 +12,7 @@ from app.models.roles import Rol
 from app.models.rutasEntrega import RutaEntrega
 from app.models.rutasParada import RutaParada
 from app.models.usuario import Usuario
-
+from app.models.codigo_restablecimiento import CodigoRestablecimiento
 __all__ = [
     "Cliente",
     "DetallePedido",
@@ -28,4 +28,5 @@ __all__ = [
     "RutaEntrega",
     "RutaParada",
     "Usuario",
+    "CodigoRestablecimiento"
 ]

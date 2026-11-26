@@ -90,7 +90,14 @@ def create_order(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
-    _require_roles(current_user, (UserRole.CLIENTE.value,))
+    _require_roles(
+        current_user,
+        (
+            UserRole.CLIENTE.value,
+            UserRole.ADMINISTRADOR.value,
+            UserRole.SUPERADMIN.value,
+        ),
+    )
     try:
         return OrderService.create_order(db, data, current_user)
     except OrderServiceError as error:

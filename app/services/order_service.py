@@ -168,13 +168,18 @@ class OrderService:
         data: OrderCreate,
         current_user: Usuario,
     ) -> dict:
-        if (
-            OrderService._role(current_user) != UserRole.CLIENTE.value
-            or current_user.cliente_idCliente is None
-            or data.cliente_idCliente != current_user.cliente_idCliente
-        ):
+        role = OrderService._role(current_user)
+        if role == UserRole.CLIENTE.value:
+            if (
+                current_user.cliente_idCliente is None
+                or data.cliente_idCliente != current_user.cliente_idCliente
+            ):
+                raise OrderForbiddenError(
+                    "Solo puedes crear pedidos para tu perfil de cliente."
+                )
+        elif role not in (UserRole.ADMINISTRADOR.value, UserRole.SUPERADMIN.value):
             raise OrderForbiddenError(
-                "Solo puedes crear pedidos para tu perfil de cliente."
+                "Solo un Cliente, Administrador o Superadmin puede crear pedidos."
             )
         if not data.listaProductos:
             raise OrderInvalidError("El pedido debe contener al menos un producto.")
@@ -209,10 +214,10 @@ class OrderService:
         product_ids = sorted(quantities)
 
         try:
-            customer = db.get(Cliente, current_user.cliente_idCliente)
+            customer = db.get(Cliente, data.cliente_idCliente)
             if customer is None:
                 raise OrderForbiddenError(
-                    "No se encontró el perfil de cliente autenticado."
+                    "No se encontró el perfil del cliente indicado."
                 )
 
             products = db.scalars(
@@ -285,7 +290,7 @@ class OrderService:
                 fechaHoraCreacion=now,
                 fechaHoraEntregaEstimada=estimated_delivery,
                 estadoPedido=OrderState.PENDIENTE.value,
-                cliente_idCliente=current_user.cliente_idCliente,
+                cliente_idCliente=data.cliente_idCliente,
             )
             db.add(order)
             db.flush()

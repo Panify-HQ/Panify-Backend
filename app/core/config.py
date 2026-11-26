@@ -25,6 +25,14 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+  # Configuración Gmail SMTP
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str | None = None
+    SMTP_PASSWORD: str | None = None
+    SMTP_FROM_NAME: str = "Panify"
+
+
 
 @lru_cache
 def get_settings() -> Settings:

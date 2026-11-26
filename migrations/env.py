@@ -21,6 +21,7 @@ from app.models import (
     RutaEntrega,
     RutaParada,
     Usuario,
+    CodigoRestablecimiento,
 )
 
 config = context.config

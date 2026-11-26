@@ -4,6 +4,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.health import router as health_router
 from app.api.v1.router import api_router
 from app.core.config import settings
+from fastapi import Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+
+from app.api.v1 import inventario
+from app.services.inventario_service import InventarioError
 
 
 def create_application() -> FastAPI:

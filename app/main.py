@@ -9,10 +9,6 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app.api.v1 import inventario
-from app.services.inventario_service import InventarioError
-
-
 def create_application() -> FastAPI:
     application = FastAPI(
         title=settings.APP_NAME,

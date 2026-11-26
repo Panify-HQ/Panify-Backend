@@ -1,4 +1,5 @@
 from getpass import getpass
+import re
 
 from email_validator import validate_email, EmailNotValidError
 from sqlalchemy import select
@@ -15,17 +16,21 @@ def solicitar_datos() -> dict:
     print("\n=== CREACIÓN DEL SUPERADMIN DE PANIFY ===")
 
     nombre = input("Nombre: ").strip()
-    while not nombre:
-        print("El nombre es obligatorio.")
+    while not 2 <= len(nombre) <= 45:
+        print("El nombre debe tener entre 2 y 45 caracteres.")
         nombre = input("Nombre: ").strip()
 
     apellido = input("Apellido: ").strip()
-    while not apellido:
-        print("El apellido es obligatorio.")
+    while not 2 <= len(apellido) <= 45:
+        print("El apellido debe tener entre 2 y 45 caracteres.")
         apellido = input("Apellido: ").strip()
 
     while True:
         correo = input("Correo electrónico: ").strip().lower()
+        if len(correo) > 150:
+            print("El correo electrónico no puede superar 150 caracteres.")
+            continue
+
         try:
             validate_email(correo, check_deliverability=False)
             break
@@ -33,15 +38,19 @@ def solicitar_datos() -> dict:
             print("Ingresa un correo electrónico válido.")
 
     telefono = input("Teléfono: ").strip()
-    while len(telefono) < 7 or len(telefono) > 15:
-        print("El teléfono debe tener entre 7 y 15 caracteres.")
+    while re.fullmatch(r"(?:\+57)?[0-9]{10}", telefono) is None:
+        print("Ingresa 10 dígitos, opcionalmente precedidos por +57.")
         telefono = input("Teléfono: ").strip()
 
     while True:
-        contrasena = getpass("Contraseña (mínimo 8 caracteres): ")
+        contrasena = getpass("Contraseña (entre 8 y 128 caracteres): ")
 
         if len(contrasena) < 8:
             print("La contraseña debe tener al menos 8 caracteres.")
+            continue
+
+        if len(contrasena) > 128:
+            print("La contraseña no puede superar 128 caracteres.")
             continue
 
         confirmacion = getpass("Confirma la contraseña: ")
@@ -118,6 +127,7 @@ def crear_superadmin():
     except Exception as error:
         db.rollback()
         print(f"\nError al crear el Superadmin: {error}")
+        raise
 
     finally:
         db.close()

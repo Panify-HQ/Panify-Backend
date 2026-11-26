@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import Integer, DateTime, Enum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.infrastructure.database.base import Base
@@ -11,8 +13,8 @@ class Pedido(Base):
     idPedido: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
     # Fechas del pedido
-    fechaHoraCreacion: Mapped[DateTime] = mapped_column(DateTime)
-    fechaHoraEntregaEstimada: Mapped[DateTime] = mapped_column(DateTime)
+    fechaHoraCreacion: Mapped[datetime] = mapped_column(DateTime)
+    fechaHoraEntregaEstimada: Mapped[datetime] = mapped_column(DateTime)
 
     # Estado del pedido
     estadoPedido: Mapped[str] = mapped_column(

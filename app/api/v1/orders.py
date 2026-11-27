@@ -106,7 +106,7 @@ def create_order(
         _raise_database_error(db, error)
 
 
-@router.get("", response_model=OrderListResponse)
+@router.get("", response_model=OrderListResponse)   
 def list_orders(
     estadoPedido: OrderState | None = Query(default=None),
     filtroTexto: str | None = Query(default=None, max_length=100),

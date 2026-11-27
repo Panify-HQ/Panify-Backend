@@ -170,9 +170,10 @@ class OrderService:
     ) -> dict:
         role = OrderService._role(current_user)
         if role == UserRole.CLIENTE.value:
-            if (
-                current_user.cliente_idCliente is None
-                or data.cliente_idCliente != current_user.cliente_idCliente
+            cliente_id = current_user.cliente_idCliente
+            if cliente_id is None or (
+                data.cliente_idCliente is not None
+                and data.cliente_idCliente != cliente_id
             ):
                 raise OrderForbiddenError(
                     "Solo puedes crear pedidos para tu perfil de cliente."
@@ -181,6 +182,12 @@ class OrderService:
             raise OrderForbiddenError(
                 "Solo un Cliente, Administrador o Superadmin puede crear pedidos."
             )
+        else:
+            cliente_id = data.cliente_idCliente
+            if cliente_id is None:
+                raise OrderInvalidError(
+                    "Debes indicar el perfil de cliente del pedido."
+                )
         if not data.listaProductos:
             raise OrderInvalidError("El pedido debe contener al menos un producto.")
         if any(line.cantidad <= 0 for line in data.listaProductos):
@@ -214,7 +221,7 @@ class OrderService:
         product_ids = sorted(quantities)
 
         try:
-            customer = db.get(Cliente, data.cliente_idCliente)
+            customer = db.get(Cliente, cliente_id)
             if customer is None:
                 raise OrderForbiddenError(
                     "No se encontró el perfil del cliente indicado."
@@ -290,7 +297,7 @@ class OrderService:
                 fechaHoraCreacion=now,
                 fechaHoraEntregaEstimada=estimated_delivery,
                 estadoPedido=OrderState.PENDIENTE.value,
-                cliente_idCliente=data.cliente_idCliente,
+                cliente_idCliente=cliente_id,
             )
             db.add(order)
             db.flush()

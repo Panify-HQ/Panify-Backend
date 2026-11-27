@@ -24,7 +24,7 @@ class OrderProductCreate(OrderSchema):
 
 
 class OrderCreate(OrderSchema):
-    cliente_idCliente: int = Field(gt=0)
+    cliente_idCliente: int | None = Field(default=None, gt=0)
     listaProductos: list[OrderProductCreate]
     fechaHoraEntregaEstimada: datetime
 

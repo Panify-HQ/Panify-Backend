@@ -148,6 +148,7 @@ class OrderService:
         if role in (
             UserRole.PANADERO.value,
             UserRole.ADMINISTRADOR.value,
+            UserRole.SUPERADMIN.value,
         ):
             return
         raise OrderForbiddenError("No tienes permisos para consultar este pedido.")
@@ -529,14 +530,18 @@ class OrderService:
                 raise OrderConflictError(
                     "El cliente solo puede cancelar pedidos en estado Pendiente."
                 )
-        elif role == UserRole.ADMINISTRADOR.value:
+        elif role in (
+            UserRole.ADMINISTRADOR.value,
+            UserRole.SUPERADMIN.value,
+        ):
             if order.estadoPedido in FINAL_STATES:
                 raise OrderConflictError(
                     "No se puede cancelar un pedido Entregado o ya Cancelado."
                 )
         else:
             raise OrderForbiddenError(
-                "Solo el cliente propietario o un Administrador puede cancelar pedidos."
+                "Solo el cliente propietario, un Administrador o un Superadmin "
+                "puede cancelar pedidos."
             )
 
         OrderService._restore_stock(db, order)
@@ -551,9 +556,10 @@ class OrderService:
         if OrderService._role(current_user) not in (
             UserRole.CLIENTE.value,
             UserRole.ADMINISTRADOR.value,
+            UserRole.SUPERADMIN.value,
         ):
             raise OrderForbiddenError(
-                "Solo un Cliente o Administrador puede cancelar pedidos."
+                "Solo un Cliente, Administrador o Superadmin puede cancelar pedidos."
             )
         try:
             order = OrderService._load_order(db, order_id, lock=True)
@@ -580,6 +586,7 @@ class OrderService:
             UserRole.PANADERO.value,
             UserRole.DOMICILIARIO.value,
             UserRole.ADMINISTRADOR.value,
+            UserRole.SUPERADMIN.value,
         ):
             raise OrderForbiddenError(
                 "No tienes permisos para cambiar el estado del pedido."
@@ -595,9 +602,13 @@ class OrderService:
                 )
 
             if data.nuevoEstado == OrderState.CANCELADO:
-                if role != UserRole.ADMINISTRADOR.value:
+                if role not in (
+                    UserRole.ADMINISTRADOR.value,
+                    UserRole.SUPERADMIN.value,
+                ):
                     raise OrderForbiddenError(
-                        "Solo un Administrador puede cancelar desde este endpoint."
+                        "Solo un Administrador o Superadmin puede cancelar "
+                        "desde este endpoint."
                     )
                 OrderService._cancel_locked_order(db, order, current_user)
             else:

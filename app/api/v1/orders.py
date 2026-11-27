@@ -35,7 +35,7 @@ from app.services.receipt_service import (
 )
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
-
+ROLES_GESTION = ("Administrador", "Panadero", "Superadmin")
 
 def _require_roles(current_user: Usuario, allowed_roles: tuple[str, ...]) -> None:
     if current_user.rol.nombre not in allowed_roles:
@@ -141,6 +141,7 @@ def get_dispatch_queue(
             UserRole.PANADERO.value,
             UserRole.DOMICILIARIO.value,
             UserRole.ADMINISTRADOR.value,
+            UserRole.SUPERADMIN.value,
         ),
     )
     try:
@@ -195,7 +196,11 @@ def cancel_order(
 ):
     _require_roles(
         current_user,
-        (UserRole.CLIENTE.value, UserRole.ADMINISTRADOR.value),
+        (
+            UserRole.CLIENTE.value,
+            UserRole.ADMINISTRADOR.value,
+            UserRole.SUPERADMIN.value,
+        ),
     )
     try:
         return OrderService.cancel_order(db, idPedido, current_user)
@@ -218,6 +223,7 @@ def update_order_status(
             UserRole.PANADERO.value,
             UserRole.DOMICILIARIO.value,
             UserRole.ADMINISTRADOR.value,
+            UserRole.SUPERADMIN.value,
         ),
     )
     try:

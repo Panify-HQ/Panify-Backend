@@ -350,6 +350,270 @@ def test_administrator_can_cancel_active_order_and_restore_inventory(db):
     assert sum(db.scalars(select(Inventarios.stockActual)).all()) == 2
 
 
+def test_superadmin_can_cancel_pending_order_through_api():
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(engine)
+    app = FastAPI()
+    app.include_router(api_router, prefix="/api/v1")
+    with Session(engine) as db:
+        superadmin = add_user(
+            db,
+            user_id=40,
+            role_id=1,
+            role_name=UserRole.SUPERADMIN.value,
+        )
+        add_user(
+            db,
+            user_id=41,
+            role_id=5,
+            role_name=UserRole.CLIENTE.value,
+            customer_id=24,
+        )
+        db.add(
+            Productos(
+                idProducto=1,
+                nombre="Pan de prueba",
+                precio=1250.5,
+                estado="Disponible",
+                descripcion="Producto de prueba",
+            )
+        )
+        db.flush()
+        db.add(
+            Inventarios(
+                stockMinimo=1,
+                stockActual=0,
+                producto_idProducto=1,
+            )
+        )
+        order = add_order(
+            db,
+            order_id=39,
+            customer_id=24,
+            product_id=1,
+        )
+        db.commit()
+        app.dependency_overrides[get_db] = lambda: db
+        app.dependency_overrides[get_current_user] = lambda: superadmin
+
+        with TestClient(app) as client:
+            response = client.patch(f"/api/v1/orders/{order.idPedido}/cancel")
+
+        assert response.status_code == 200
+        assert response.json()["estadoPedido"] == OrderState.CANCELADO.value
+        assert (
+            db.get(Pedido, order.idPedido).estadoPedido
+            == OrderState.CANCELADO.value
+        )
+        assert sum(db.scalars(select(Inventarios.stockActual)).all()) == 2
+
+    engine.dispose()
+
+
+def test_superadmin_can_view_and_update_order_status(db):
+    superadmin = add_user(
+        db,
+        user_id=42,
+        role_id=1,
+        role_name=UserRole.SUPERADMIN.value,
+    )
+    add_user(
+        db,
+        user_id=43,
+        role_id=5,
+        role_name=UserRole.CLIENTE.value,
+        customer_id=25,
+    )
+    db.add(
+        Productos(
+            idProducto=1,
+            nombre="Pan de prueba",
+            precio=1250.5,
+            estado="Disponible",
+            descripcion="Producto de prueba",
+        )
+    )
+    db.flush()
+    db.add(
+        Inventarios(
+            stockMinimo=1,
+            stockActual=5,
+            producto_idProducto=1,
+        )
+    )
+    order = add_order(db, order_id=40, customer_id=25, product_id=1)
+    db.commit()
+
+    updated = OrderService.update_status(
+        db,
+        order.idPedido,
+        OrderStatusUpdate(nuevoEstado=OrderState.EN_PREPARACION),
+        superadmin,
+    )
+    detail = OrderService.get_order_detail(db, order.idPedido, superadmin)
+
+    assert updated["estadoPedido"] == OrderState.EN_PREPARACION.value
+    assert detail["estadoPedido"] == OrderState.EN_PREPARACION.value
+
+
+def test_superadmin_can_use_all_order_endpoints_through_api(monkeypatch):
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(engine)
+    app = FastAPI()
+    app.include_router(api_router, prefix="/api/v1")
+    now = datetime.now().replace(microsecond=0)
+    monkeypatch.setattr(OrderService, "_now", staticmethod(lambda: now))
+
+    with Session(engine) as db:
+        superadmin = add_user(
+            db,
+            user_id=44,
+            role_id=1,
+            role_name=UserRole.SUPERADMIN.value,
+        )
+        add_user(
+            db,
+            user_id=45,
+            role_id=5,
+            role_name=UserRole.CLIENTE.value,
+            customer_id=26,
+        )
+        add_user(
+            db,
+            user_id=46,
+            role_id=5,
+            role_name=UserRole.CLIENTE.value,
+            customer_id=27,
+        )
+        add_user(
+            db,
+            user_id=47,
+            role_id=4,
+            role_name=UserRole.DOMICILIARIO.value,
+            courier_id=72,
+        )
+        db.add(
+            Productos(
+                idProducto=1,
+                nombre="Pan de prueba",
+                precio=1250.5,
+                estado="Disponible",
+                descripcion="Producto de prueba",
+            )
+        )
+        db.flush()
+        db.add(
+            Inventarios(
+                stockMinimo=1,
+                stockActual=0,
+                producto_idProducto=1,
+            )
+        )
+        first_order = add_order(
+            db,
+            order_id=41,
+            customer_id=26,
+            product_id=1,
+            created_at=now,
+        )
+        second_order = add_order(
+            db,
+            order_id=42,
+            customer_id=27,
+            product_id=1,
+            created_at=now,
+        )
+        third_order = add_order(
+            db,
+            order_id=43,
+            customer_id=26,
+            product_id=1,
+            created_at=now,
+        )
+        db.commit()
+        app.dependency_overrides[get_db] = lambda: db
+        app.dependency_overrides[get_current_user] = lambda: superadmin
+
+        with TestClient(app) as client:
+            delivery_time = (now + timedelta(days=1)).isoformat()
+            create_attempt = client.post(
+                "/api/v1/orders",
+                json={
+                    "cliente_idCliente": 26,
+                    "listaProductos": [],
+                    "fechaHoraEntregaEstimada": delivery_time,
+                },
+            )
+            assert create_attempt.status_code == 400
+            assert create_attempt.json()["detail"] == (
+                "El pedido debe contener al menos un producto."
+            )
+            first_id = first_order.idPedido
+            second_id = second_order.idPedido
+
+            listing = client.get("/api/v1/orders")
+            queue = client.get("/api/v1/orders/dispatch-queue")
+            today = now.date().isoformat()
+            history = client.get(
+                "/api/v1/orders/history/filter",
+                params={"fechaInicio": today, "fechaFin": today},
+            )
+            detail = client.get(f"/api/v1/orders/{second_id}")
+
+            assert listing.status_code == 200
+            assert {item["idPedido"] for item in listing.json()["items"]} >= {
+                first_id,
+                second_id,
+            }
+            assert queue.status_code == 200
+            assert {item["idPedido"] for item in queue.json()} >= {
+                first_id,
+                second_id,
+            }
+            assert history.status_code == 200
+            assert {item["idPedido"] for item in history.json()["items"]} >= {
+                first_id,
+                second_id,
+            }
+            assert detail.status_code == 200
+            assert detail.json()["idPedido"] == second_id
+
+            for state, extra in (
+                ("En preparación", {}),
+                ("Listo", {}),
+                ("En camino", {"domiciliario_idDomiciliario": 72}),
+                ("Entregado", {}),
+            ):
+                status_response = client.patch(
+                    f"/api/v1/orders/{first_id}/status",
+                    json={"nuevoEstado": state, **extra},
+                )
+                assert status_response.status_code == 200
+                assert status_response.json()["estadoPedido"] == state
+
+            cancellation = client.patch(
+                f"/api/v1/orders/{second_id}/cancel"
+            )
+            assert cancellation.status_code == 200
+            assert cancellation.json()["estadoPedido"] == OrderState.CANCELADO.value
+
+            confirmation = client.post(
+                f"/api/v1/orders/{third_order.idPedido}/confirm"
+            )
+            assert confirmation.status_code == 201
+            assert confirmation.json()["reciboGenerado"] is True
+
+    engine.dispose()
+
+
 def test_order_listing_applies_customer_scope_and_product_name_filter(db):
     customer = add_user(
         db,

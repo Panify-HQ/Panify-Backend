@@ -129,8 +129,12 @@ class UsuarioActualizar(BaseModel):
             "examples": [
                 {
                     "nombre": "Ana María",
+                },
+                {
                     "correo": "ana.actualizada@example.com",
                     "telefono": "3001234567",
+                },
+                {
                     "direccion": "Carrera 10 #20-30",
                 }
             ]

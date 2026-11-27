@@ -1,9 +1,19 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from fastapi import (
+    APIRouter,
+    Body,
+    Depends,
+    HTTPException,
+    Path,
+    Query,
+    Request,
+    Response,
+)
 from fastapi.routing import APIRoute
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import bearer_scheme, get_current_user
+from app.api.openapi_examples import build_openapi_examples
 from app.infrastructure.database.session import get_db
 from app.models.usuario import Usuario
 from app.schemas.inventory import (
@@ -83,7 +93,16 @@ def es_gestor(usuario: Usuario | None) -> bool:
     operation_id="rf_003_1_registrar_producto",
 )
 def crear_producto(
-    datos: ProductoCrear,
+    datos: ProductoCrear = Body(
+        openapi_examples=build_openapi_examples(
+            ProductoCrear,
+            {
+                "pan_campesino": "Pan campesino",
+                "croissant_chocolate": "Croissant de chocolate",
+                "galletas_avena": "Galletas de avena",
+            },
+        )
+    ),
     db: Session = Depends(get_db),
     _=Depends(require_roles(*ROLES_GESTION)),
 ):
@@ -105,8 +124,23 @@ def crear_producto(
     operation_id="rf_003_2_actualizar_producto",
 )
 def actualizar_producto(
-    id_producto: int,
-    datos: ProductoActualizar,
+    id_producto: int = Path(
+        alias="product_id",
+        gt=0,
+        openapi_examples={
+            "producto_1": {"summary": "Actualizar producto 1", "value": 1}
+        },
+    ),
+    datos: ProductoActualizar = Body(
+        openapi_examples=build_openapi_examples(
+            ProductoActualizar,
+            {
+                "actualizar_precio": "Actualizar precio",
+                "actualizar_stock": "Actualizar stock",
+                "actualizar_precio_y_stock": "Actualizar precio y stock",
+            },
+        )
+    ),
     db: Session = Depends(get_db),
     _=Depends(require_roles(*ROLES_GESTION)),
 ):
@@ -129,8 +163,25 @@ def actualizar_producto(
     operation_id="rf_003_4_listar_productos",
 )
 def listar_productos(
-    categoria: str | None = Query(default=None, max_length=250),
-    buscar: str | None = Query(default=None, max_length=250),
+    categoria: str | None = Query(
+        default=None,
+        max_length=250,
+        openapi_examples={
+            "panaderia": {"summary": "Filtrar por Panadería", "value": "Panadería"},
+            "pasteleria": {
+                "summary": "Filtrar por Pastelería",
+                "value": "Pastelería",
+            },
+        },
+    ),
+    buscar: str | None = Query(
+        default=None,
+        max_length=250,
+        openapi_examples={
+            "pan": {"summary": "Buscar pan", "value": "Pan"},
+            "croissant": {"summary": "Buscar croissant", "value": "Croissant"},
+        },
+    ),
     db: Session = Depends(get_db),
     usuario: Usuario | None = Depends(get_optional_user),
 ):
@@ -150,7 +201,13 @@ def listar_productos(
     operation_id="rf_003_4_consultar_producto",
 )
 def obtener_producto(
-    id_producto: int,
+    id_producto: int = Path(
+        alias="product_id",
+        gt=0,
+        openapi_examples={
+            "producto_1": {"summary": "Consultar producto 1", "value": 1}
+        },
+    ),
     db: Session = Depends(get_db),
     usuario: Usuario | None = Depends(get_optional_user),
 ):
@@ -168,8 +225,23 @@ def obtener_producto(
     operation_id="rf_003_5_validar_disponibilidad",
 )
 def validar_disponibilidad(
-    id_producto: int,
-    cantidad: int = Query(gt=0),
+    id_producto: int = Path(
+        alias="product_id",
+        gt=0,
+        openapi_examples={
+            "producto_1": {"summary": "Validar producto 1", "value": 1}
+        },
+    ),
+    cantidad: int = Query(
+        gt=0,
+        openapi_examples={
+            "una_unidad": {"summary": "Comprobar una unidad", "value": 1},
+            "varias_unidades": {
+                "summary": "Comprobar cinco unidades",
+                "value": 5,
+            },
+        },
+    ),
     db: Session = Depends(get_db),
     _=Depends(get_current_user),
 ):
@@ -182,7 +254,15 @@ def validar_disponibilidad(
     operation_id="rf_003_6_control_automatico_stock",
 )
 def descontar_stock(
-    datos: DescuentoIn,
+    datos: DescuentoIn = Body(
+        openapi_examples=build_openapi_examples(
+            DescuentoIn,
+            {
+                "un_producto": "Descontar un producto",
+                "varios_productos": "Descontar varios productos",
+            },
+        )
+    ),
     db: Session = Depends(get_db),
     _=Depends(require_roles("Sistema", "Superadmin")),
 ):
@@ -198,7 +278,14 @@ def descontar_stock(
     operation_id="rf_003_7_alertas_stock_bajo",
 )
 def alertas_stock(
-    umbral: int | None = Query(default=None, ge=0),
+    umbral: int | None = Query(
+        default=None,
+        ge=0,
+        openapi_examples={
+            "umbral_cinco": {"summary": "Stock igual o menor a 5", "value": 5},
+            "umbral_diez": {"summary": "Stock igual o menor a 10", "value": 10},
+        },
+    ),
     db: Session = Depends(get_db),
     _=Depends(require_roles(*ROLES_GESTION)),
 ):
@@ -212,7 +299,13 @@ def alertas_stock(
     operation_id="rf_003_3_inactivar_producto",
 )
 def inactivar_producto(
-    id_producto: int,
+    id_producto: int = Path(
+        alias="product_id",
+        gt=0,
+        openapi_examples={
+            "producto_1": {"summary": "Inactivar producto 1", "value": 1}
+        },
+    ),
     db: Session = Depends(get_db),
     _=Depends(require_roles("Administrador")),
 ):

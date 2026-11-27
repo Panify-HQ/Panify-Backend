@@ -136,6 +136,8 @@ La API principal usa el prefijo `/api/v1`; los endpoints de salud no tienen ese 
 | `PATCH` | `/api/v1/orders/{idPedido}/status` | Panadero, Domiciliario o Administrador | Actualiza el estado del pedido, sujeto a las reglas de negocio. |
 | `POST` | `/api/v1/orders/{order_id}/confirm` | Panadero, Administrador o Superadmin | Confirma un pedido pendiente y genera su recibo. |
 
+Al crear un pedido, el cuerpo incluye `listaProductos` y `fechaHoraEntregaEstimada`. El Cliente omite `cliente_idCliente`: el backend lo toma de su perfil autenticado. Administrador y Superadmin deben indicar ese campo.
+
 ### Recibos
 
 | Método | Endpoint | Acceso | Función |

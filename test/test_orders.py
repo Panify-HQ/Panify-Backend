@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
+from sqlalchemy.pool import StaticPool
 
 from app.api.dependencies import get_current_user
 from app.api.v1.router import api_router
@@ -190,7 +191,6 @@ def test_create_order_freezes_price_and_consumes_combined_inventory(db, monkeypa
     product = add_product(db, stocks=(1, 4))
     monkeypatch.setattr(OrderService, "_now", staticmethod(lambda: now))
     data = OrderCreate(
-        cliente_idCliente=10,
         listaProductos=[OrderProductCreate(idProducto=1, cantidad=3)],
         fechaHoraEntregaEstimada=now + timedelta(hours=2),
     )
@@ -210,7 +210,29 @@ def test_create_order_freezes_price_and_consumes_combined_inventory(db, monkeypa
     product.precio = 9999
     db.commit()
     saved_order = db.get(Pedido, response["idPedido"])
+    assert saved_order.cliente_idCliente == 10
     assert OrderService._total(saved_order) == Decimal("3751.50")
+
+
+def test_customer_cannot_create_order_for_another_customer(db, monkeypatch):
+    now = datetime(2026, 11, 24, 10, 0)
+    customer = add_user(
+        db,
+        user_id=40,
+        role_id=5,
+        role_name=UserRole.CLIENTE.value,
+        customer_id=23,
+    )
+    add_product(db)
+    monkeypatch.setattr(OrderService, "_now", staticmethod(lambda: now))
+    data = OrderCreate(
+        cliente_idCliente=24,
+        listaProductos=[OrderProductCreate(idProducto=1, cantidad=1)],
+        fechaHoraEntregaEstimada=now + timedelta(hours=2),
+    )
+
+    with pytest.raises(OrderForbiddenError):
+        OrderService.create_order(db, data, customer)
 
 
 def test_create_order_rolls_back_when_stock_is_insufficient(db, monkeypatch):
@@ -570,3 +592,44 @@ def test_order_api_requires_authentication_and_valid_pagination(db):
     assert invalid_pagination.status_code == 422
     assert empty_order.status_code == 400
     assert invalid_quantity.status_code == 400
+
+
+def test_customer_order_api_uses_authenticated_customer_when_id_is_omitted():
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(engine)
+    app = FastAPI()
+    app.include_router(api_router, prefix="/api/v1")
+
+    with Session(engine) as db:
+        app.dependency_overrides[get_db] = lambda: db
+        customer = add_user(
+            db,
+            user_id=39,
+            role_id=5,
+            role_name=UserRole.CLIENTE.value,
+            customer_id=22,
+        )
+        add_product(db)
+        db.commit()
+        app.dependency_overrides[get_current_user] = lambda: customer
+
+        with TestClient(app) as client:
+            response = client.post(
+                "/api/v1/orders",
+                json={
+                    "listaProductos": [{"idProducto": 1, "cantidad": 1}],
+                    "fechaHoraEntregaEstimada": (
+                        datetime.now() + timedelta(days=1)
+                    ).isoformat(),
+                },
+            )
+
+        assert response.status_code == 201
+        order = db.get(Pedido, response.json()["idPedido"])
+        assert order.cliente_idCliente == 22
+
+    engine.dispose()

@@ -1,26 +1,78 @@
-from typing import Optional
-
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from fastapi.routing import APIRoute
+from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
-from app.auth import get_current_user, get_optional_user, require_roles  # ajusta
-from app.infrastructure.database.session import get_db  # ajusta
-from app.schemas.inventario import (
+from app.api.dependencies import bearer_scheme, get_current_user
+from app.infrastructure.database.session import get_db
+from app.models.usuario import Usuario
+from app.schemas.inventory import (
     DescuentoIn,
     ProductoActualizar,
     ProductoCrear,
     ProductoOut,
     a_producto_out,
 )
-from app.services import inventario_service as svc
+from app.services import inventory as svc
 
-router = APIRouter(prefix="/api/v1/inventario", tags=["inventario"])
+
+class RutaInventario(APIRoute):
+    def get_route_handler(self):
+        manejar_solicitud = super().get_route_handler()
+
+        async def manejar_error_inventario(request: Request) -> Response:
+            try:
+                return await manejar_solicitud(request)
+            except svc.InventarioError as error:
+                raise HTTPException(
+                    status_code=error.status_code,
+                    detail=error.detail,
+                ) from error
+
+        return manejar_error_inventario
+
+
+router = APIRouter(
+   prefix="/inventario",
+    tags=["inventario"],
+    route_class=RutaInventario,
+)
 
 ROLES_GESTION = ("Administrador", "Panadero")
 
 
-def es_gestor(usuario) -> bool:
-    return usuario is not None and usuario.rol in ROLES_GESTION
+def get_optional_user(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    db: Session = Depends(get_db),
+) -> Usuario | None:
+    if "Authorization" not in request.headers:
+        return None
+
+    return get_current_user(credentials=credentials, db=db)
+
+
+def require_roles(*roles_permitidos: str):
+    def verificar_rol(
+        usuario: Usuario = Depends(get_current_user),
+    ) -> Usuario:
+        if usuario.rol is None or usuario.rol.nombre not in roles_permitidos:
+            raise HTTPException(
+                status_code=403,
+                detail="No tienes permiso para esta operación.",
+            )
+
+        return usuario
+
+    return verificar_rol
+
+
+def es_gestor(usuario: Usuario | None) -> bool:
+    return (
+        usuario is not None
+        and usuario.rol is not None
+        and usuario.rol.nombre in ROLES_GESTION
+    )
 
 
 @router.post("/productos", status_code=201, response_model=ProductoOut)
@@ -30,7 +82,12 @@ def crear_producto(
     _=Depends(require_roles(*ROLES_GESTION)),
 ):
     producto = svc.crear_producto(
-        db, datos.nombre, datos.precio, datos.stockInicial, datos.categoria
+        db,
+        nombre=datos.nombre,
+        precio=datos.precio,
+        stock_inicial=datos.stockInicial,
+        categoria=datos.categoria,
+        descripcion=datos.descripcion,
     )
     return a_producto_out(producto)
 
@@ -42,27 +99,45 @@ def actualizar_producto(
     db: Session = Depends(get_db),
     _=Depends(require_roles(*ROLES_GESTION)),
 ):
-    producto = svc.actualizar_producto(db, id_producto, datos.precio, datos.stock)
+    producto = svc.actualizar_producto(
+        db,
+        id_producto,
+        precio=datos.precio,
+        stock=datos.stock,
+        nombre=datos.nombre,
+        categoria=datos.categoria,
+        stock_minimo=datos.stockMinimo,
+    )
     return a_producto_out(producto)
 
 
 @router.get("/productos", response_model=list[ProductoOut])
 def listar_productos(
-    categoria: Optional[str] = Query(default=None, max_length=250),
+    categoria: str | None = Query(default=None, max_length=250),
+    buscar: str | None = Query(default=None, max_length=250),
     db: Session = Depends(get_db),
-    usuario=Depends(get_optional_user),
+    usuario: Usuario | None = Depends(get_optional_user),
 ):
-    productos = svc.listar_productos(db, categoria, ver_todos=es_gestor(usuario))
-    return [a_producto_out(p) for p in productos]
+    productos = svc.listar_productos(
+        db,
+        categoria=categoria,
+        ver_todos=es_gestor(usuario),
+        buscar=buscar,
+    )
+    return [a_producto_out(producto) for producto in productos]
 
 
 @router.get("/productos/{id_producto}", response_model=ProductoOut)
 def obtener_producto(
     id_producto: int,
     db: Session = Depends(get_db),
-    usuario=Depends(get_optional_user),
+    usuario: Usuario | None = Depends(get_optional_user),
 ):
-    producto = svc.obtener_producto(db, id_producto, ver_todos=es_gestor(usuario))
+    producto = svc.obtener_producto(
+        db,
+        id_producto,
+        ver_todos=es_gestor(usuario),
+    )
     return a_producto_out(producto)
 
 
@@ -82,18 +157,18 @@ def descontar_stock(
     db: Session = Depends(get_db),
     _=Depends(require_roles("Sistema")),
 ):
-    items = [(i.id, i.cantidad) for i in datos.productos]
+    items = [(item.id, item.cantidad) for item in datos.productos]
     svc.descontar_stock(db, datos.idPedido, items)
     return {"idPedido": datos.idPedido, "estado": "Descontado"}
 
 
 @router.get("/alertas", response_model=list[ProductoOut])
 def alertas_stock(
-    umbral: Optional[int] = Query(default=None, ge=0),
+    umbral: int | None = Query(default=None, ge=0),
     db: Session = Depends(get_db),
     _=Depends(require_roles(*ROLES_GESTION)),
 ):
-    return [a_producto_out(p) for p in svc.alertas_stock(db, umbral)]
+    return [a_producto_out(producto) for producto in svc.alertas_stock(db, umbral)]
 
 
 @router.delete("/productos/{id_producto}", status_code=204)

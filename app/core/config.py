@@ -13,7 +13,10 @@ class Settings(BaseSettings):
     DATABASE_URL: str
 
     # Orígenes del frontend
-    CORS_ORIGINS: list[str] = ["http://localhost:5174"]
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
 
     # Configuración JWT
     JWT_SECRET_KEY: str

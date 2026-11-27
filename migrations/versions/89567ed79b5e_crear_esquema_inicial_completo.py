@@ -28,7 +28,7 @@ def upgrade() -> None:
             sa.Enum("Nuevo", "Frecuente", "Ocasional"),
             nullable=False,
         ),
-        sa.Column("dirección", sa.String(length=150), nullable=False),
+        sa.Column("direccion", sa.String(length=150), nullable=False),
         sa.PrimaryKeyConstraint("idCliente"),
     )
     op.create_table(

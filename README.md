@@ -121,7 +121,7 @@ La API principal usa el prefijo `/api/v1`; los endpoints de salud no tienen ese 
 | `GET` | `/api/v1/inventario/productos/{id_producto}/disponibilidad?cantidad=1` | JWT | Comprueba si hay existencias para la cantidad solicitada. |
 | `POST` | `/api/v1/inventario/movimientos/descuento` | Rol `Sistema` | Descuenta del inventario los productos asociados a un pedido. |
 | `GET` | `/api/v1/inventario/alertas` | Administrador o Panadero | Lista productos con inventario bajo; acepta el parámetro opcional `umbral`. |
-| `DELETE` | `/api/v1/inventario/productos/{id_producto}` | Administrador | Inactiva un producto. |
+| `PATCH` | `/api/v1/inventario/productos/{id_producto}` | Administrador | Inactiva un producto. |
 
 ### Pedidos
 

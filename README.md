@@ -83,72 +83,87 @@ Proveer la lógica de negocio, las reglas de validación y la persistencia que n
 
 La API principal usa el prefijo `/api/v1`; los endpoints de salud no tienen ese prefijo. Las rutas protegidas requieren el encabezado `Authorization: Bearer <token>`, que se obtiene al iniciar sesión. Puedes consultar los esquemas de entrada y salida y probar las rutas en Swagger: `http://127.0.0.1:8000/docs`.
 
+Los nombres de operación de Swagger identifican los requisitos funcionales (RF). Las URLs y métodos HTTP se conservan. `Técnico` indica una operación sin RF funcional directo.
+
 ### Salud
 
-| Método | Endpoint | Acceso | Función |
+| RF / Nombre en Swagger | Método y endpoint | Acceso | Función |
 | --- | --- | --- | --- |
-| `GET` | `/health` | Público | Comprueba que el servidor está activo. |
-| `GET` | `/health/ready` | Público | Comprueba la conexión a MySQL; devuelve `503` si la base no está disponible. |
+| Técnico — Verificar API activa | `GET /health` | Público | Comprueba que el servidor está activo. |
+| Técnico — Verificar conexión a base de datos | `GET /health/ready` | Público | Comprueba la conexión a MySQL; devuelve `503` si la base no está disponible. |
 
 ### Autenticación y recuperación de contraseña
 
-| Método | Endpoint | Acceso | Función |
+| RF / Nombre en Swagger | Método y endpoint | Acceso | Función |
 | --- | --- | --- | --- |
-| `POST` | `/api/v1/auth/login` | Público | Valida correo y contraseña y devuelve un JWT. |
-| `GET` | `/api/v1/auth/me` | JWT | Devuelve el perfil del usuario autenticado. |
-| `POST` | `/api/v1/auth/logout` | JWT | Revoca el token actual. |
-| `POST` | `/api/v1/auth/forgot-password` | Público | Solicita por correo un código de recuperación. |
-| `POST` | `/api/v1/auth/reset-password` | Público | Valida el código y establece una nueva contraseña. |
+| RF-001.2 — Iniciar sesión | `POST /api/v1/auth/login` | Público | Valida correo y contraseña y devuelve un JWT. |
+| RF-002.5 — Perfil personal autenticado | `GET /api/v1/auth/me` | JWT | Consulta el perfil del usuario autenticado; no lo edita. |
+| Técnico — Cerrar sesión | `POST /api/v1/auth/logout` | JWT | Revoca el token actual. |
+| RF-001.3 — Solicitar recuperación de contraseña | `POST /api/v1/auth/forgot-password` | Público | Solicita por correo un código de recuperación. |
+| RF-001.4 — Restablecer contraseña | `POST /api/v1/auth/reset-password` | Público | Valida el código y establece una nueva contraseña. |
 
 La API no expone operaciones `DELETE`; las bajas o desactivaciones se realizan mediante `PATCH` donde corresponda.
 
 ### Usuarios
 
-| Método | Endpoint | Acceso | Función |
+| RF / Nombre en Swagger | Método y endpoint | Acceso | Función |
 | --- | --- | --- | --- |
-| `POST` | `/api/v1/users/` | Público para clientes; personal requiere Administrador o Superadmin; crear Administrador requiere Superadmin | Registra un usuario según el rol solicitado. |
-| `GET` | `/api/v1/users/` | Superadmin | Lista usuarios; admite `role`, `is_active`, `skip` y `limit`. |
-| `GET` | `/api/v1/users/{user_id}` | Superadmin | Consulta un usuario por ID. |
-| `PATCH` | `/api/v1/users/{user_id}` | Superadmin | Actualiza los datos permitidos del usuario. |
-| `PATCH` | `/api/v1/users/{user_id}/status` | Superadmin | Activa o desactiva un usuario. |
+| RF-001.1 / RF-002.2 — Registrar usuario | `POST /api/v1/users/` | Público para clientes; personal requiere Administrador o Superadmin; crear Administrador requiere Superadmin | Registra un usuario según el rol solicitado. |
+| RF-002.1 — Consultar y listar usuarios | `GET /api/v1/users/` | Superadmin | Lista usuarios; admite `role`, `is_active`, `skip` y `limit`. |
+| RF-002.1 — Consultar usuario por ID | `GET /api/v1/users/{user_id}` | Superadmin | Consulta un usuario por ID. |
+| RF-002.3 — Actualizar información de usuario | `PATCH /api/v1/users/{user_id}` | Superadmin | Actualiza los datos permitidos del usuario. |
+| RF-002.3 — Actualizar estado de usuario | `PATCH /api/v1/users/{user_id}/status` | Superadmin | Activa o desactiva un usuario. |
 
 ### Inventario y productos
 
-| Método | Endpoint | Acceso | Función |
+| RF / Nombre en Swagger | Método y endpoint | Acceso | Función |
 | --- | --- | --- | --- |
-| `POST` | `/api/v1/inventario/productos` | Administrador, Panadero o Superadmin | Crea un producto y su inventario inicial. |
-| `PATCH` | `/api/v1/inventario/productos/{id_producto}` | Administrador, Panadero o Superadmin | Actualiza precio o existencias de un producto. |
-| `GET` | `/api/v1/inventario/productos` | Público; JWT opcional | Lista productos; acepta `categoria` y `buscar`. Sin rol gestor, solo muestra productos activos. |
-| `GET` | `/api/v1/inventario/productos/{id_producto}` | Público; JWT opcional | Consulta un producto; sin rol gestor, solo permite consultar productos activos. |
-| `GET` | `/api/v1/inventario/productos/{id_producto}/disponibilidad?cantidad=1` | JWT | Comprueba si hay existencias para la cantidad solicitada. |
-| `POST` | `/api/v1/inventario/movimientos/descuento` | Rol `Sistema` o Superadmin | Descuenta del inventario los productos asociados a un pedido. |
-| `GET` | `/api/v1/inventario/alertas` | Administrador, Panadero o Superadmin | Lista productos con inventario bajo; acepta el parámetro opcional `umbral`. |
-| `PATCH` | `/api/v1/inventario/productos/{id_producto}` | Administrador o Superadmin | Inactiva un producto. |
+| RF-003.1 — Registrar producto | `POST /api/v1/inventory/products` | Administrador o Panadero | Crea un producto y su inventario inicial. |
+| RF-003.2 — Actualizar producto | `PATCH /api/v1/inventory/products/{product_id}` | Administrador o Panadero | Actualiza precio o existencias de un producto. |
+| RF-003.4 — Consultar productos | `GET /api/v1/inventory/products` | Público; JWT opcional | Lista productos; acepta `categoria` y `buscar`. Sin rol gestor, solo muestra productos activos. |
+| RF-003.4 — Consultar producto por ID | `GET /api/v1/inventory/productos/{product_id}` | Público; JWT opcional | Consulta un producto; sin rol gestor, solo permite consultar productos activos. |
+| RF-003.5 — Validar disponibilidad | `GET /api/v1/inventory/products/{product_id}/availability?cantidad=1` | JWT | Comprueba si hay existencias para la cantidad solicitada. |
+| RF-003.6 — Control automático de stock | `POST /api/v1/inventory/movements/stock-deduction` | Rol `Sistema` o Superadmin | Descuenta del inventario los productos asociados a un pedido. |
+| RF-003.7 — Alertas de stock bajo | `GET /api/v1/inventory/alerts` | Administrador o Panadero | Lista productos con inventario bajo; acepta el parámetro opcional `umbral`. |
+| RF-003.3 — Inactivar producto | Ruta declarada con un tab antes de `/products/{product_id}/deactivate` | Administrador | Inactiva un producto; la ruta actual requiere corrección. |
 
 ### Pedidos
 
-| Método | Endpoint | Acceso | Función |
+| RF / Nombre en Swagger | Método y endpoint | Acceso | Función |
 | --- | --- | --- | --- |
-| `POST` | `/api/v1/orders` | Cliente, Administrador o Superadmin | Crea un pedido. |
-| `GET` | `/api/v1/orders` | JWT | Lista pedidos visibles para el usuario; acepta `estadoPedido`, `filtroTexto`, `page` y `page_size`. |
-| `GET` | `/api/v1/orders/dispatch-queue` | Panadero, Domiciliario, Administrador o Superadmin | Consulta la cola de pedidos para despacho. |
-| `GET` | `/api/v1/orders/history/filter?fechaInicio=AAAA-MM-DD&fechaFin=AAAA-MM-DD` | JWT | Filtra el historial por fechas; acepta también `page` y `page_size`. |
-| `GET` | `/api/v1/orders/{idPedido}` | JWT | Consulta el detalle de un pedido sujeto a los permisos del usuario. |
-| `PATCH` | `/api/v1/orders/{idPedido}/cancel` | Cliente propietario del pedido, Administrador o Superadmin | Cancela un pedido cuando las reglas de negocio lo permiten. |
-| `PATCH` | `/api/v1/orders/{idPedido}/status` | Panadero, Domiciliario, Administrador o Superadmin | Actualiza el estado del pedido, sujeto a las reglas de negocio. |
-| `POST` | `/api/v1/orders/{order_id}/confirm` | Panadero, Administrador o Superadmin | Confirma un pedido pendiente y genera su recibo. |
+| RF-004.1 — Crear y registrar pedido | `POST /api/v1/orders` | Cliente, Administrador o Superadmin | Crea un pedido. |
+| RF-004.2 — Consultar historial de pedidos | `GET /api/v1/orders` | JWT | Lista pedidos visibles para el usuario; acepta `estadoPedido`, `filtroTexto`, `page` y `page_size`. |
+| RF-006.1 — Gestionar prioridad de entregas | `GET /api/v1/orders/dispatch-queue` | Panadero, Domiciliario, Administrador o Superadmin | Consulta la cola de pedidos para despacho. |
+| RF-004.2 — Filtrar historial de pedidos | `GET /api/v1/orders/history/filter?fechaInicio=AAAA-MM-DD&fechaFin=AAAA-MM-DD` | JWT | Filtra el historial por fechas; acepta también `page` y `page_size`. |
+| RF-004.3 — Consultar detalle de pedido | `GET /api/v1/orders/{idPedido}` | JWT | Consulta el detalle de un pedido sujeto a los permisos del usuario. |
+| RF-004.4 — Cancelar pedido | `PATCH /api/v1/orders/{idPedido}/cancel` | Cliente propietario del pedido, Administrador o Superadmin | Cancela un pedido cuando las reglas de negocio lo permiten. |
+| RF-004.5 — Actualizar estado del pedido | `PATCH /api/v1/orders/{idPedido}/status` | Panadero, Domiciliario, Administrador o Superadmin | Actualiza el estado del pedido, sujeto a las reglas de negocio. |
+| RF-005.1 — Generar recibo del pedido | `POST /api/v1/orders/{order_id}/confirm` | Panadero, Administrador o Superadmin | Confirma un pedido pendiente y genera su recibo. |
 
 Al crear un pedido, el cuerpo incluye `listaProductos` y `fechaHoraEntregaEstimada`. El Cliente omite `cliente_idCliente`: el backend lo toma de su perfil autenticado. Administrador y Superadmin deben indicar ese campo.
 
 ### Recibos
 
-| Método | Endpoint | Acceso | Función |
+| RF / Nombre en Swagger | Método y endpoint | Acceso | Función |
 | --- | --- | --- | --- |
-| `GET` | `/api/v1/receipts/` | JWT | Lista recibos visibles; acepta `search`, `page` y `page_size`. |
-| `GET` | `/api/v1/receipts/{receipt_id}` | JWT | Consulta el recibo, el pedido, el cliente y los productos con precios congelados. |
-| `GET` | `/api/v1/receipts/{receipt_id}/pdf` | JWT | Descarga el recibo en PDF. |
+| RF-005.2 — Consultar recibos | `GET /api/v1/receipts/` | JWT | Lista recibos visibles; acepta `search`, `page` y `page_size`. |
+| RF-005.3 — Consultar detalle del recibo | `GET /api/v1/receipts/{receipt_id}` | JWT | Consulta el recibo, el pedido, el cliente y los productos con precios congelados. |
+| RF-005.4 — Descargar recibo en PDF | `GET /api/v1/receipts/{receipt_id}/pdf` | JWT | Descarga el recibo en PDF. |
 
 En recibos, Cliente solo ve los propios; Domiciliario, los pedidos que tiene asignados; Administrador y Superadmin pueden consultar todos. Panadero puede confirmar pedidos, pero no consultar ni descargar recibos. `search` admite hasta 100 caracteres y `page`/`page_size` deben ser positivos. La fecha de emisión se asigna en el servidor.
+
+### Entregas
+
+| RF / Nombre en Swagger | Método y endpoint | Acceso | Función |
+| --- | --- | --- | --- |
+| RF-006.1 — Gestionar prioridad de entregas | `GET /api/v1/deliveries/queue` | Domiciliario, Panadero, Administrador o Superadmin | Lista entregas prioritarias. |
+| RF-006.3 — Filtrar pedidos por fecha | `GET /api/v1/deliveries/history?fechaInicio=AAAA-MM-DD` | Administrador o Superadmin | Consulta el historial de entregas por fecha. |
+| RF-006.4 — Visualizar información del cliente | `GET /api/v1/deliveries/{idPedido}/details` | Domiciliario, Panadero, Administrador o Superadmin | Consulta la información del cliente asociada al pedido. |
+| RF-006.2 — Confirmar entrega | `PATCH /api/v1/deliveries/{idPedido}/status` | Domiciliario, Panadero, Administrador o Superadmin | Actualiza el estado de entrega. |
+
+### RF sin endpoint específico
+
+El backend actual no tiene una ruta dedicada para asignar o cambiar roles (RF-002.4), editar el perfil propio (RF-002.5; `GET /auth/me` solo lo consulta), filtrar recibos por fecha (RF-005.5), generar reportes operativos (RF-005.6), registrar observaciones (RF-006.5) ni registrar tiempos de preparación (RF-006.6). No se añadieron rutas nuevas para esos requisitos.
 
 ---
 

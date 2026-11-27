@@ -21,12 +21,26 @@ from app.models.productos import Productos
 from app.models.recibos import Recibos
 from app.models.roles import Rol
 from app.models.usuario import Usuario
+from app.schemas.receipt import ReceiptOrderDetail
 from app.schemas.user import UserRole
 from app.services.receipt_service import (
     ReceiptConflictError,
     ReceiptForbiddenError,
     ReceiptService,
 )
+
+
+def test_receipt_detail_normalizes_mysql_zero_delivery_date():
+    order = ReceiptOrderDetail.model_validate(
+        {
+            "idPedido": 1,
+            "estadoPedido": "En preparación",
+            "fechaHoraCreacion": datetime(2026, 11, 24, 10, 0),
+            "fechaHoraEntregaEstimada": "0000-00-00 00:00:00",
+        }
+    )
+
+    assert order.fechaHoraEntregaEstimada is None
 
 
 @pytest.fixture

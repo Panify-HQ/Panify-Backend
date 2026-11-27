@@ -14,7 +14,7 @@ class Cliente(Base):
         Enum("Nuevo", "Frecuente", "Ocasional"), nullable=False
     )
 
-    direccion: Mapped[str] = mapped_column("dirección", String(150), nullable=False)
+    direccion: Mapped[str] = mapped_column("direccion", String(150), nullable=False)
 
     usuarios: Mapped[list["Usuario"]] = relationship(back_populates="cliente")
     pedidos: Mapped[list["Pedido"]] = relationship(back_populates="cliente")

@@ -38,7 +38,7 @@ router = APIRouter(
     route_class=RutaInventario,
 )
 
-ROLES_GESTION = ("Administrador", "Panadero")
+ROLES_GESTION = ("Superadmin", "Administrador", "Panadero")
 
 
 def get_optional_user(
@@ -175,7 +175,7 @@ def alertas_stock(
 def inactivar_producto(
     id_producto: int,
     db: Session = Depends(get_db),
-    _=Depends(require_roles("Administrador")),
+   _=Depends(require_roles("Superadmin", "Administrador")),
 ):
     svc.inactivar_producto(db, id_producto)
     return Response(status_code=204)

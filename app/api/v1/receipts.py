@@ -49,9 +49,30 @@ def _http_error(error: Exception) -> HTTPException:
     operation_id="rf_005_2_consultar_recibos",
 )
 def list_receipts(
-    search: str | None = Query(default=None, max_length=100),
-    page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1),
+    search: str | None = Query(
+        default=None,
+        max_length=100,
+        openapi_examples={
+            "cliente": {"summary": "Buscar por nombre", "value": "Ana"},
+            "producto": {"summary": "Buscar por producto", "value": "campesino"},
+        },
+    ),
+    page: int = Query(
+        default=1,
+        ge=1,
+        openapi_examples={
+            "primera_pagina": {"summary": "Primera página", "value": 1},
+            "segunda_pagina": {"summary": "Segunda página", "value": 2},
+        },
+    ),
+    page_size: int = Query(
+        default=20,
+        ge=1,
+        openapi_examples={
+            "veinte": {"summary": "Listar 20 recibos", "value": 20},
+            "cincuenta": {"summary": "Listar 50 recibos", "value": 50},
+        },
+    ),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
@@ -74,7 +95,12 @@ def list_receipts(
     operation_id="rf_005_3_detalle_recibo",
 )
 def get_receipt(
-    receipt_id: int = Path(gt=0),
+    receipt_id: int = Path(
+        gt=0,
+        openapi_examples={
+            "recibo_101": {"summary": "Consultar recibo 101", "value": 101}
+        },
+    ),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
@@ -90,7 +116,12 @@ def get_receipt(
     operation_id="rf_005_4_descargar_recibo_pdf",
 )
 def download_receipt_pdf(
-    receipt_id: int = Path(gt=0),
+    receipt_id: int = Path(
+        gt=0,
+        openapi_examples={
+            "recibo_101": {"summary": "Descargar PDF del recibo 101", "value": 101}
+        },
+    ),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):

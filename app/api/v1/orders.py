@@ -1,11 +1,12 @@
 from datetime import date
 from typing import NoReturn
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query, status
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user
+from app.api.openapi_examples import build_openapi_examples
 from app.infrastructure.database.session import get_db
 from app.models.usuario import Usuario
 from app.schemas.order import (
@@ -88,7 +89,15 @@ def _raise_database_error(db: Session, error: SQLAlchemyError) -> NoReturn:
     operation_id="rf_004_1_crear_pedido",
 )
 def create_order(
-    data: OrderCreate,
+    data: OrderCreate = Body(
+        openapi_examples=build_openapi_examples(
+            OrderCreate,
+            {
+                "pedido_cliente": "Pedido del cliente autenticado",
+                "pedido_administrativo": "Pedido para un cliente específico",
+            },
+        )
+    ),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
@@ -115,10 +124,42 @@ def create_order(
     operation_id="rf_004_2_listar_pedidos",
 )
 def list_orders(
-    estadoPedido: OrderState | None = Query(default=None),
-    filtroTexto: str | None = Query(default=None, max_length=100),
-    page: int = Query(default=1, gt=0),
-    page_size: int = Query(default=20, gt=0, le=100),
+    estadoPedido: OrderState | None = Query(
+        default=None,
+        openapi_examples={
+            "pendiente": {"summary": "Pedidos pendientes", "value": "Pendiente"},
+            "en_preparacion": {
+                "summary": "Pedidos en preparación",
+                "value": "En preparación",
+            },
+            "en_camino": {"summary": "Pedidos en camino", "value": "En camino"},
+        },
+    ),
+    filtroTexto: str | None = Query(
+        default=None,
+        max_length=100,
+        openapi_examples={
+            "cliente": {"summary": "Buscar por nombre", "value": "Ana"},
+            "producto": {"summary": "Buscar por producto", "value": "campesino"},
+        },
+    ),
+    page: int = Query(
+        default=1,
+        gt=0,
+        openapi_examples={
+            "primera_pagina": {"summary": "Primera página", "value": 1},
+            "segunda_pagina": {"summary": "Segunda página", "value": 2},
+        },
+    ),
+    page_size: int = Query(
+        default=20,
+        gt=0,
+        le=100,
+        openapi_examples={
+            "veinte": {"summary": "Listar 20 pedidos", "value": 20},
+            "cincuenta": {"summary": "Listar 50 pedidos", "value": 50},
+        },
+    ),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
@@ -169,10 +210,39 @@ def get_dispatch_queue(
     operation_id="rf_004_2_filtrar_historial_pedidos",
 )
 def filter_order_history(
-    fechaInicio: date,
-    fechaFin: date,
-    page: int = Query(default=1, gt=0),
-    page_size: int = Query(default=20, gt=0, le=100),
+    fechaInicio: date = Query(
+        ...,
+        openapi_examples={
+            "inicio_noviembre": {
+                "summary": "Inicio del periodo",
+                "value": "2026-11-01",
+            }
+        },
+    ),
+    fechaFin: date = Query(
+        ...,
+        openapi_examples={
+            "fin_noviembre": {
+                "summary": "Fin del periodo",
+                "value": "2026-11-27",
+            }
+        },
+    ),
+    page: int = Query(
+        default=1,
+        gt=0,
+        openapi_examples={
+            "primera_pagina": {"summary": "Primera página", "value": 1}
+        },
+    ),
+    page_size: int = Query(
+        default=20,
+        gt=0,
+        le=100,
+        openapi_examples={
+            "veinte": {"summary": "Listar 20 pedidos", "value": 20}
+        },
+    ),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
@@ -198,7 +268,12 @@ def filter_order_history(
     operation_id="rf_004_3_detalle_pedido",
 )
 def get_order_detail(
-    idPedido: int = Path(gt=0),
+    idPedido: int = Path(
+        gt=0,
+        openapi_examples={
+            "pedido_101": {"summary": "Consultar pedido 101", "value": 101}
+        },
+    ),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
@@ -217,7 +292,12 @@ def get_order_detail(
     operation_id="rf_004_4_cancelar_pedido",
 )
 def cancel_order(
-    idPedido: int = Path(gt=0),
+    idPedido: int = Path(
+        gt=0,
+        openapi_examples={
+            "pedido_101": {"summary": "Cancelar pedido 101", "value": 101}
+        },
+    ),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
@@ -244,8 +324,24 @@ def cancel_order(
     operation_id="rf_004_5_actualizar_estado_pedido",
 )
 def update_order_status(
-    data: OrderStatusUpdate,
-    idPedido: int = Path(gt=0),
+    data: OrderStatusUpdate = Body(
+        openapi_examples=build_openapi_examples(
+            OrderStatusUpdate,
+            {
+                "en_preparacion": "Cambiar a En preparación",
+                "listo": "Marcar como Listo",
+                "en_camino": "Asignar domiciliario y cambiar a En camino",
+                "entregado": "Marcar como Entregado",
+                "cancelado": "Cancelar pedido",
+            },
+        )
+    ),
+    idPedido: int = Path(
+        gt=0,
+        openapi_examples={
+            "pedido_101": {"summary": "Actualizar pedido 101", "value": 101}
+        },
+    ),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
@@ -274,7 +370,12 @@ def update_order_status(
     operation_id="rf_005_1_generar_recibo",
 )
 def confirm_order(
-    order_id: int = Path(gt=0),
+    order_id: int = Path(
+        gt=0,
+        openapi_examples={
+            "pedido_101": {"summary": "Generar recibo del pedido 101", "value": 101}
+        },
+    ),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):

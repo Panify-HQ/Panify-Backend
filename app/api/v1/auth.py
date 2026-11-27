@@ -1,13 +1,14 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Response, status
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import bearer_scheme, get_current_user
+from app.api.openapi_examples import build_openapi_examples
 from app.core.config import settings
 from app.core.security import (
     create_access_token,
@@ -58,7 +59,15 @@ def authenticate_user(
     summary="RF-001.2 - Iniciar sesión",
     operation_id="rf_001_2_iniciar_sesion",
 )
-def login(data: LoginRequest, db: Session = Depends(get_db)):
+def login(
+    data: LoginRequest = Body(
+        openapi_examples=build_openapi_examples(
+            LoginRequest,
+            {"iniciar_sesion": "Credenciales de inicio de sesión"},
+        )
+    ),
+    db: Session = Depends(get_db),
+):
     """Autentica al usuario y devuelve un JWT."""
 
     try:

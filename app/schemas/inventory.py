@@ -16,6 +16,19 @@ class ProductoCrear(BaseModel):
                     "stockInicial": 20,
                     "categoria": "Panadería",
                     "descripcion": "Pan artesanal recién horneado",
+                },
+                {
+                    "nombre": "Croissant de chocolate",
+                    "precio": 3800,
+                    "stockInicial": 15,
+                    "categoria": "Pastelería",
+                    "descripcion": "Croissant relleno de chocolate",
+                },
+                {
+                    "nombre": "Galletas de avena",
+                    "precio": 2500,
+                    "stockInicial": 30,
+                    "categoria": "Galletería",
                 }
             ]
         }
@@ -34,8 +47,9 @@ class ProductoActualizar(BaseModel):
             "examples": [
                 {
                     "precio": 4800,
-                    "stock": 25,
-                }
+                },
+                {"stock": 25},
+                {"precio": 4800, "stock": 25},
             ]
         }
     )
@@ -69,11 +83,15 @@ class DescuentoIn(BaseModel):
             "examples": [
                 {
                     "idPedido": 101,
+                    "productos": [{"id": 1, "cantidad": 2}],
+                },
+                {
+                    "idPedido": 102,
                     "productos": [
-                        {"id": 1, "cantidad": 2},
-                        {"id": 3, "cantidad": 1},
+                        {"id": 2, "cantidad": 3},
+                        {"id": 5, "cantidad": 1},
                     ],
-                }
+                },
             ]
         }
     )

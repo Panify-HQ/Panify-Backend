@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query, status
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import bearer_scheme, get_current_user
+from app.api.openapi_examples import build_openapi_examples
 from app.infrastructure.database.session import get_db
 from app.models.usuario import Usuario
 from app.schemas.user import (
@@ -44,7 +45,17 @@ def require_super_admin(
     operation_id="rf_001_1_rf_002_2_registrar_usuario",
 )
 def registrar_usuario(
-    datos: UsuarioCrear,
+    datos: UsuarioCrear = Body(
+        openapi_examples=build_openapi_examples(
+            UsuarioCrear,
+            {
+                "cliente": "Registro de cliente",
+                "panadero": "Registro de panadero",
+                "domiciliario": "Registro de domiciliario",
+                "administrador": "Registro de administrador",
+            },
+        )
+    ),
     db: Session = Depends(get_db),
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ):
@@ -110,10 +121,43 @@ def registrar_usuario(
     operation_id="rf_002_1_listar_usuarios",
 )
 def list_users(
-    role: UserRole | None = Query(default=None),
-    is_active: bool | None = Query(default=None),
-    skip: int = Query(default=0, ge=0),
-    limit: int = Query(default=50, ge=1, le=100),
+    role: UserRole | None = Query(
+        default=None,
+        openapi_examples={
+            "clientes": {"summary": "Filtrar clientes", "value": "Cliente"},
+            "administradores": {
+                "summary": "Filtrar administradores",
+                "value": "Administrador",
+            },
+        },
+    ),
+    is_active: bool | None = Query(
+        default=None,
+        openapi_examples={
+            "activos": {"summary": "Usuarios activos", "value": True},
+            "inactivos": {"summary": "Usuarios inactivos", "value": False},
+        },
+    ),
+    skip: int = Query(
+        default=0,
+        ge=0,
+        openapi_examples={
+            "desde_inicio": {"summary": "Empezar desde el inicio", "value": 0},
+            "siguiente_bloque": {
+                "summary": "Saltar los primeros 20 usuarios",
+                "value": 20,
+            },
+        },
+    ),
+    limit: int = Query(
+        default=50,
+        ge=1,
+        le=100,
+        openapi_examples={
+            "veinte": {"summary": "Listar 20 usuarios", "value": 20},
+            "cien": {"summary": "Listar hasta 100 usuarios", "value": 100},
+        },
+    ),
     db: Session = Depends(get_db),
 ):
     return UserService.list_users(
@@ -133,7 +177,12 @@ def list_users(
     operation_id="rf_002_1_consultar_usuario",
 )
 def get_user(
-    user_id: int,
+    user_id: int = Path(
+        gt=0,
+        openapi_examples={
+            "usuario_1": {"summary": "Consultar usuario 1", "value": 1}
+        },
+    ),
     db: Session = Depends(get_db),
 ):
     try:
@@ -153,8 +202,22 @@ def get_user(
     operation_id="rf_002_3_actualizar_usuario",
 )
 def update_user(
-    user_id: int,
-    data: UserUpdate,
+    user_id: int = Path(
+        gt=0,
+        openapi_examples={
+            "usuario_1": {"summary": "Actualizar usuario 1", "value": 1}
+        },
+    ),
+    data: UserUpdate = Body(
+        openapi_examples=build_openapi_examples(
+            UserUpdate,
+            {
+                "actualizar_nombre": "Actualizar nombre",
+                "actualizar_contacto": "Actualizar correo y teléfono",
+                "actualizar_direccion": "Actualizar dirección",
+            },
+        )
+    ),
     db: Session = Depends(get_db),
 ):
     try:
@@ -183,8 +246,21 @@ def update_user(
     operation_id="rf_002_3_actualizar_estado_usuario",
 )
 def change_user_status(
-    user_id: int,
-    data: UsuarioEstadoActualizar,
+    user_id: int = Path(
+        gt=0,
+        openapi_examples={
+            "usuario_1": {"summary": "Cambiar estado del usuario 1", "value": 1}
+        },
+    ),
+    data: UsuarioEstadoActualizar = Body(
+        openapi_examples=build_openapi_examples(
+            UsuarioEstadoActualizar,
+            {
+                "activar_usuario": "Activar usuario",
+                "inactivar_usuario": "Inactivar usuario",
+            },
+        )
+    ),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(require_super_admin),
 ):

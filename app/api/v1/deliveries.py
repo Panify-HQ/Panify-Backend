@@ -1,11 +1,12 @@
 from datetime import date
 from typing import NoReturn
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query, status
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user
+from app.api.openapi_examples import build_openapi_examples
 from app.infrastructure.database.session import get_db
 from app.models.usuario import Usuario
 from app.schemas.delivery import (
@@ -85,10 +86,41 @@ def get_delivery_queue(
     operation_id="rf_006_3_filtrar_pedidos_por_fecha",
 )
 def filter_delivery_history(
-    fechaInicio: date,
-    fechaFin: date | None = Query(default=None),
-    page: int = Query(default=1, gt=0),
-    limiteRegistros: int = Query(default=50, gt=0, le=100),
+    fechaInicio: date = Query(
+        ...,
+        openapi_examples={
+            "inicio_noviembre": {
+                "summary": "Inicio del periodo",
+                "value": "2026-11-01",
+            }
+        },
+    ),
+    fechaFin: date | None = Query(
+        default=None,
+        openapi_examples={
+            "fin_noviembre": {
+                "summary": "Fin del periodo",
+                "value": "2026-11-27",
+            }
+        },
+    ),
+    page: int = Query(
+        default=1,
+        gt=0,
+        openapi_examples={
+            "primera_pagina": {"summary": "Primera página", "value": 1},
+            "segunda_pagina": {"summary": "Segunda página", "value": 2},
+        },
+    ),
+    limiteRegistros: int = Query(
+        default=50,
+        gt=0,
+        le=100,
+        openapi_examples={
+            "veinte": {"summary": "Listar 20 pedidos", "value": 20},
+            "cien": {"summary": "Listar hasta 100 pedidos", "value": 100},
+        },
+    ),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(
         require_roles(
@@ -122,7 +154,12 @@ def filter_delivery_history(
     operation_id="rf_006_4_informacion_cliente_pedido",
 )
 def get_order_details(
-    idPedido: int = Path(gt=0),
+    idPedido: int = Path(
+        gt=0,
+        openapi_examples={
+            "pedido_101": {"summary": "Consultar datos del pedido 101", "value": 101}
+        },
+    ),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(
         require_roles(
@@ -152,8 +189,18 @@ def get_order_details(
     operation_id="rf_006_2_confirmar_entrega",
 )
 def update_order_status(
-    data: DeliveryStatusUpdate,
-    idPedido: int = Path(gt=0),
+    data: DeliveryStatusUpdate = Body(
+        openapi_examples=build_openapi_examples(
+            DeliveryStatusUpdate,
+            {"confirmar_entrega": "Confirmar entrega del pedido"},
+        )
+    ),
+    idPedido: int = Path(
+        gt=0,
+        openapi_examples={
+            "pedido_101": {"summary": "Confirmar entrega del pedido 101", "value": 101}
+        },
+    ),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(
         require_roles(

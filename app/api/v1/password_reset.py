@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from sqlalchemy.orm import Session
 
+from app.api.openapi_examples import build_openapi_examples
 from app.infrastructure.database.session import get_db
 
 from app.services.password_reset_service import (
@@ -63,7 +64,12 @@ class MensajeRespuesta(BaseModel):
     operation_id="rf_001_3_solicitar_recuperacion_contrasena",
 )
 def forgot_password(
-    datos: SolicitarCodigoRequest,
+    datos: SolicitarCodigoRequest = Body(
+        openapi_examples=build_openapi_examples(
+            SolicitarCodigoRequest,
+            {"solicitar_codigo": "Solicitar código de recuperación"},
+        )
+    ),
     db: Session = Depends(get_db)
 ):
 
@@ -100,7 +106,12 @@ def forgot_password(
     operation_id="rf_001_4_restablecer_contrasena",
 )
 def reset_password(
-    datos: RestablecerContrasenaRequest,
+    datos: RestablecerContrasenaRequest = Body(
+        openapi_examples=build_openapi_examples(
+            RestablecerContrasenaRequest,
+            {"restablecer_contrasena": "Restablecer contraseña"},
+        )
+    ),
     db: Session = Depends(get_db)
 ):
 

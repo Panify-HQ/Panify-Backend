@@ -144,11 +144,6 @@ class UserService:
     ) -> Usuario:
         user = UserService.get_user(db, user_id)
 
-        if user.rol.nombre == UserRole.SUPERADMIN.value:
-            raise UserServiceError(
-                "No se puede modificar el Superadmin desde este módulo."
-            )
-
         changes = data.model_dump(exclude_unset=True)
         if "correo" in changes:
             if changes["correo"] is None:
@@ -208,9 +203,6 @@ class UserService:
         current_user_id: int,
     ) -> Usuario:
         user = UserService.get_user(db, user_id)
-
-        if user.rol.nombre == UserRole.SUPERADMIN.value:
-            raise UserServiceError("No se puede cambiar el estado del Superadmin.")
 
         if user.idUsuario == current_user_id and not is_active:
             raise UserServiceError("No puedes desactivar tu propia cuenta.")

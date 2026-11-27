@@ -97,6 +97,39 @@ def test_user_service_updates_model_fields_and_customer_address():
         assert cliente.direccion == "Carrera 2"
 
 
+def test_superadmin_can_be_updated_and_deactivated():
+    engine = create_database()
+
+    with Session(engine) as db:
+        add_roles(db)
+        superadmin = Usuario(
+            nombre="Super",
+            apellido="Admin",
+            correo="superadmin@example.com",
+            contrasena="hash",
+            telefono="3001234567",
+            estado="Activo",
+            Rol_idRol=1,
+        )
+        db.add(superadmin)
+        db.commit()
+
+        updated = UserService.update_user(
+            db,
+            superadmin.idUsuario,
+            UserUpdate(nombre="Super Admin"),
+        )
+        inactive = UserService.change_status(
+            db,
+            superadmin.idUsuario,
+            is_active=False,
+            current_user_id=999,
+        )
+
+        assert updated.nombre == "Super Admin"
+        assert inactive.estado == "Inactivo"
+
+
 def test_user_service_rejects_missing_users_and_self_deactivation():
     engine = create_database()
 

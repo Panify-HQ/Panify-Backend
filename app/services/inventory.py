@@ -1,16 +1,15 @@
-from typing import Optional
-
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.infrastructure.database.models import DetallePedido, Inventarios, Productos  # ajusta
+from app.models.inventarios import Inventarios
+from app.models.productos import Productos
+
 
 ESTADO_ACTIVO = "ACTIVO"
 ESTADO_INACTIVO = "INACTIVO"
-ESTADOS_PEDIDO_ACTIVO = ("Pendiente", "En proceso")  # ajusta a tus estados reales
+ESTADOS_PEDIDO_ACTIVO = ("Pendiente", "En proceso")
 
 
-# ---------- Excepciones de dominio ----------
 class InventarioError(Exception):
     status_code = 400
 
@@ -43,7 +42,6 @@ class ProductoEnPedidosActivos(InventarioError):
     status_code = 409
 
 
-# ---------- Helpers ----------
 def calcular_estado_stock(stock: int, stock_minimo: int) -> str:
     if stock == 0:
         return "Agotado"
@@ -52,13 +50,13 @@ def calcular_estado_stock(stock: int, stock_minimo: int) -> str:
     return "Disponible"
 
 
-def inventario_de(producto: Productos) -> Optional[Inventarios]:
+def inventario_de(producto: Productos) -> Inventarios | None:
     return producto.inventarios[0] if producto.inventarios else None
 
 
 def stock_de(producto: Productos) -> int:
-    inv = inventario_de(producto)
-    return inv.stockActual if inv else 0
+    inventario = inventario_de(producto)
+    return inventario.stockActual if inventario is not None else 0
 
 
 def _obtener_o_404(db: Session, id_producto: int) -> Productos:
@@ -69,28 +67,38 @@ def _obtener_o_404(db: Session, id_producto: int) -> Productos:
 
 
 def _hay_pedidos_activos(producto: Productos) -> bool:
-    # Supone DetallePedido.pedido -> modelo con campo estado; ajusta si difiere
     return any(
-        d.pedido is not None and d.pedido.estado in ESTADOS_PEDIDO_ACTIVO
-        for d in producto.detalles_pedido
+        detalle.pedido is not None
+        and detalle.pedido.estado in ESTADOS_PEDIDO_ACTIVO
+        for detalle in producto.detalles_pedido
     )
 
 
-# ---------- Casos de uso ----------
 def crear_producto(
-    db: Session, nombre: str, precio: float, stock_inicial: int, categoria: str
+    db: Session,
+    nombre: str,
+    precio: float,
+    stock_inicial: int,
+    categoria: str,
+    descripcion: str | None = None,
 ) -> Productos:
-    existe = db.scalar(select(Productos.idProducto).where(Productos.nombre == nombre))
-    if existe is not None:
+    nombre_existente = db.scalar(
+        select(Productos.idProducto).where(Productos.nombre == nombre)
+    )
+    if nombre_existente is not None:
         raise NombreDuplicado("Nombre duplicado")
 
     producto = Productos(
         nombre=nombre,
         precio=precio,
         estado=ESTADO_ACTIVO,
-        descripcion=categoria,
+        categoria=categoria,
+        descripcion=descripcion,
     )
-    producto.inventarios.append(Inventarios(stockActual=stock_inicial, stockMinimo=0))
+    producto.inventarios.append(
+        Inventarios(stockActual=stock_inicial, stockMinimo=0)
+    )
+
     db.add(producto)
     db.commit()
     db.refresh(producto)
@@ -100,22 +108,44 @@ def crear_producto(
 def actualizar_producto(
     db: Session,
     id_producto: int,
-    precio: Optional[float] = None,
-    stock: Optional[int] = None,
+    precio: float | None = None,
+    stock: int | None = None,
+    nombre: str | None = None,
+    categoria: str | None = None,
+    stock_minimo: int | None = None,
 ) -> Productos:
-    if precio is None and stock is None:
+    cambios = (precio, stock, nombre, categoria, stock_minimo)
+    if all(valor is None for valor in cambios):
         raise DatosInvalidos("Nada que actualizar")
 
     producto = _obtener_o_404(db, id_producto)
 
+    if nombre is not None:
+        nombre_existente = db.scalar(
+            select(Productos.idProducto).where(
+                Productos.nombre == nombre,
+                Productos.idProducto != id_producto,
+            )
+        )
+        if nombre_existente is not None:
+            raise NombreDuplicado("Nombre duplicado")
+        producto.nombre = nombre
+
     if precio is not None:
         producto.precio = precio
-    if stock is not None:
-        inv = inventario_de(producto)
-        if inv is None:
-            inv = Inventarios(stockActual=0, stockMinimo=0)
-            producto.inventarios.append(inv)
-        inv.stockActual = stock
+    if categoria is not None:
+        producto.categoria = categoria
+
+    if stock is not None or stock_minimo is not None:
+        inventario = inventario_de(producto)
+        if inventario is None:
+            inventario = Inventarios(stockActual=0, stockMinimo=0)
+            producto.inventarios.append(inventario)
+
+        if stock is not None:
+            inventario.stockActual = stock
+        if stock_minimo is not None:
+            inventario.stockMinimo = stock_minimo
 
     db.commit()
     db.refresh(producto)
@@ -123,17 +153,31 @@ def actualizar_producto(
 
 
 def listar_productos(
-    db: Session, categoria: Optional[str] = None, ver_todos: bool = False
+    db: Session,
+    categoria: str | None = None,
+    ver_todos: bool = False,
+    buscar: str | None = None,
 ) -> list[Productos]:
-    q = select(Productos).options(selectinload(Productos.inventarios))
+    consulta = select(Productos).options(selectinload(Productos.inventarios))
+
     if categoria:
-        q = q.where(Productos.descripcion == categoria)
+        consulta = consulta.where(Productos.categoria == categoria)
+
+    termino = buscar.strip() if buscar else ""
+    if termino:
+        consulta = consulta.where(
+            func.lower(Productos.nombre).contains(termino.lower(), autoescape=True)
+        )
+
     if not ver_todos:
-        q = q.where(Productos.estado == ESTADO_ACTIVO)
-    return list(db.scalars(q).all())
+        consulta = consulta.where(Productos.estado == ESTADO_ACTIVO)
+
+    return list(db.scalars(consulta).all())
 
 
-def obtener_producto(db: Session, id_producto: int, ver_todos: bool = False) -> Productos:
+def obtener_producto(
+    db: Session, id_producto: int, ver_todos: bool = False
+) -> Productos:
     producto = _obtener_o_404(db, id_producto)
     if not ver_todos and producto.estado != ESTADO_ACTIVO:
         raise ProductoNoEncontrado("Producto no encontrado")
@@ -141,51 +185,66 @@ def obtener_producto(db: Session, id_producto: int, ver_todos: bool = False) -> 
 
 
 def validar_disponibilidad(db: Session, id_producto: int, cantidad: int) -> bool:
-    producto = obtener_producto(db, id_producto, ver_todos=False)
+    producto = obtener_producto(db, id_producto)
     return cantidad <= stock_de(producto)
 
 
-def descontar_stock(db: Session, id_pedido: int, items: list[tuple[int, int]]) -> None:
-    """Descuento transaccional. Agrupa repetidos y bloquea filas en orden de id."""
+def descontar_stock(
+    db: Session, id_pedido: int, items: list[tuple[int, int]]
+) -> None:
     if not items:
         raise DatosInvalidos("Sin productos para descontar")
 
-    acumulado: dict[int, int] = {}
+    cantidades_por_producto: dict[int, int] = {}
     for id_producto, cantidad in items:
-        acumulado[id_producto] = acumulado.get(id_producto, 0) + cantidad
+        cantidades_por_producto[id_producto] = (
+            cantidades_por_producto.get(id_producto, 0) + cantidad
+        )
 
     try:
-        for id_producto in sorted(acumulado):
-            inv = db.scalar(
+        for id_producto in sorted(cantidades_por_producto):
+            inventario = db.scalar(
                 select(Inventarios)
                 .where(Inventarios.producto_idProducto == id_producto)
                 .with_for_update()
             )
-            if inv is None:
+            if inventario is None:
                 raise SinInventario(f"Producto {id_producto} sin inventario")
-            if inv.stockActual < acumulado[id_producto]:
-                raise StockInsuficiente(f"Stock insuficiente para producto {id_producto}")
-            inv.stockActual -= acumulado[id_producto]
+
+            cantidad = cantidades_por_producto[id_producto]
+            if inventario.stockActual < cantidad:
+                raise StockInsuficiente(
+                    f"Stock insuficiente para producto {id_producto}"
+                )
+
+            inventario.stockActual -= cantidad
+
         db.commit()
     except Exception:
         db.rollback()
         raise
 
 
-def alertas_stock(db: Session, umbral: Optional[int] = None) -> list[Productos]:
-    productos = listar_productos(db, ver_todos=False)
+def alertas_stock(db: Session, umbral: int | None = None) -> list[Productos]:
+    productos = listar_productos(db)
     resultado = []
-    for p in productos:
-        inv = inventario_de(p)
-        limite = umbral if umbral is not None else (inv.stockMinimo if inv else 0)
-        if stock_de(p) <= limite:
-            resultado.append(p)
+
+    for producto in productos:
+        inventario = inventario_de(producto)
+        minimo = inventario.stockMinimo if inventario is not None else 0
+        limite = umbral if umbral is not None else minimo
+        if stock_de(producto) <= limite:
+            resultado.append(producto)
+
     return resultado
 
 
 def inactivar_producto(db: Session, id_producto: int) -> None:
     producto = _obtener_o_404(db, id_producto)
+    if producto.estado != ESTADO_ACTIVO:
+        raise DatosInvalidos("El producto debe estar activo para inactivarlo")
     if _hay_pedidos_activos(producto):
         raise ProductoEnPedidosActivos("Producto en pedidos activos")
+
     producto.estado = ESTADO_INACTIVO
     db.commit()

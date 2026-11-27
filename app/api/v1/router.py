@@ -1,6 +1,8 @@
 from fastapi import APIRouter
 
-from app.api.v1 import auth, orders, receipts, users
+feature/gestion-productos
+from app.api.v1 import auth, orders, receipts, users, inventory
+from app.api.v1 import auth, inventory, orders, receipts, users
 from app.api.v1.password_reset import router as password_reset_router
 
 api_router = APIRouter()
@@ -16,3 +18,4 @@ api_router.include_router(auth.router)
 api_router.include_router(users.router)
 api_router.include_router(orders.router)
 api_router.include_router(receipts.router)
+api_router.include_router(inventory.router)

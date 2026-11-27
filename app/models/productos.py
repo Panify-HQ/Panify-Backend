@@ -15,6 +15,7 @@ class Productos(Base):
     estado: Mapped[str | None] = mapped_column(
         Enum("ACTIVO", "INACTIVO", "AGOTADO"), nullable=True
     )
+    categoria: Mapped[str | None] = mapped_column(String(250), nullable=True)
     descripcion: Mapped[str | None] = mapped_column(String(250), nullable=True)
 
     detalles_pedido: Mapped[list["DetallePedido"]] = relationship(
@@ -24,13 +25,20 @@ class Productos(Base):
     movimientos: Mapped[list["Movimientos"]] = relationship(back_populates="producto")
 
     def __init__(
-        self, nombre=None, precio=None, estado=None, descripcion=None, idProducto=None
+        self,
+        nombre=None,
+        precio=None,
+        estado=None,
+        descripcion=None,
+        idProducto=None,
+        categoria=None,
     ):
         if idProducto is not None:
             self.idProducto = idProducto
         self.nombre = nombre
         self.precio = precio
         self.estado = estado
+        self.categoria = categoria
         self.descripcion = descripcion
 
     def json(self):
@@ -39,8 +47,13 @@ class Productos(Base):
             "nombre": self.nombre,
             "precio": self.precio,
             "estado": self.estado,
+            "categoria": self.categoria,
             "descripcion": self.descripcion,
         }
 
     def __str__(self):
-        return f"Productos(idProducto={self.idProducto}, nombre={self.nombre}, precio={self.precio}, estado={self.estado}, descripcion={self.descripcion})"
+        return (
+            f"Productos(idProducto={self.idProducto}, nombre={self.nombre}, "
+            f"precio={self.precio}, estado={self.estado}, "
+            f"categoria={self.categoria}, descripcion={self.descripcion})"
+        )

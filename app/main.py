@@ -8,9 +8,10 @@ from fastapi import Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-
+ feature/gestion-productos
 from app.api.v1 import inventory as inventario
 from app.services.inventory import InventarioError
+
 
 
 def create_application() -> FastAPI:

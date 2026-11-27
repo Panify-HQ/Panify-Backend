@@ -4,7 +4,7 @@
 
 Backend de **Panify**, el sistema de gestión de pedidos, inventario, recibos y entregas de **Distribuciones Oro Pan**, una fábrica de pan. Centraliza la lógica de negocio y el acceso a los datos de la plataforma web, reemplazando el registro manual de pedidos (llamadas y papel).
 
-> 🚧 **Estado del proyecto:** en construcción. Por ahora el repositorio contiene la **estructura base** del backend (configuración, conexión a MySQL y verificación de estado). Los endpoints de cada módulo se agregarán en las siguientes etapas.
+> 🚧 **Estado del proyecto:** en desarrollo. El backend ya cuenta con endpoints para autenticación, usuarios, inventario, pedidos y recibos. La documentación interactiva permite consultar las rutas disponibles cuando el servidor está activo: `http://127.0.0.1:8000/docs`.
 
 ---
 
@@ -79,127 +79,230 @@ Proveer la lógica de negocio, las reglas de validación y la persistencia que n
 
 **Pendiente por definir:** estrategia de despliegue.
 
-## 🧾 Recibos MVP
+## 🔌 API y endpoints actuales
 
-| Método | Endpoint | Función |
-| ------ | -------- | ------- |
-| `POST` | `/api/v1/orders/{order_id}/confirm` | Confirma un pedido `Pendiente` como `En preparación` y genera su único recibo. |
-| `GET` | `/api/v1/receipts?search=&page=1&page_size=20` | Lista recibos visibles, con búsqueda por recibo, pedido o nombre del cliente y paginación. |
-| `GET` | `/api/v1/receipts/{receipt_id}` | Consulta el detalle del recibo, cliente y productos con precios congelados. |
-| `GET` | `/api/v1/receipts/{receipt_id}/pdf` | Descarga el comprobante PDF generado desde los datos almacenados. |
+La API principal usa el prefijo `/api/v1`; los endpoints de salud no tienen ese prefijo. Las rutas protegidas requieren el encabezado `Authorization: Bearer <token>`, que se obtiene al iniciar sesión. Puedes consultar los esquemas de entrada y salida y probar las rutas en Swagger: `http://127.0.0.1:8000/docs`.
 
-La búsqueda admite hasta 100 caracteres; `page` y `page_size` deben ser enteros positivos. El listado y el detalle se limitan según el rol: Cliente (solo propios), Administrador/Superadmin (todos), Domiciliario (pedidos asignados). Panadero puede confirmar pedidos, pero no consultar ni descargar recibos. La fecha de emisión se asigna en el servidor.
+### Salud
+
+| Método | Endpoint | Acceso | Función |
+| --- | --- | --- | --- |
+| `GET` | `/health` | Público | Comprueba que el servidor está activo. |
+| `GET` | `/health/ready` | Público | Comprueba la conexión a MySQL; devuelve `503` si la base no está disponible. |
+
+### Autenticación y recuperación de contraseña
+
+| Método | Endpoint | Acceso | Función |
+| --- | --- | --- | --- |
+| `POST` | `/api/v1/auth/login` | Público | Valida correo y contraseña y devuelve un JWT. |
+| `GET` | `/api/v1/auth/me` | JWT | Devuelve el perfil del usuario autenticado. |
+| `POST` | `/api/v1/auth/logout` | JWT | Revoca el token actual. |
+| `POST` | `/api/v1/auth/forgot-password` | Público | Solicita por correo un código de recuperación. |
+| `POST` | `/api/v1/auth/reset-password` | Público | Valida el código y establece una nueva contraseña. |
+
+### Usuarios
+
+| Método | Endpoint | Acceso | Función |
+| --- | --- | --- | --- |
+| `POST` | `/api/v1/users/` | Público para clientes; personal requiere Administrador o Superadmin; crear Administrador requiere Superadmin | Registra un usuario según el rol solicitado. |
+| `GET` | `/api/v1/users/` | Superadmin | Lista usuarios; admite `role`, `is_active`, `skip` y `limit`. |
+| `GET` | `/api/v1/users/{user_id}` | Superadmin | Consulta un usuario por ID. |
+| `PATCH` | `/api/v1/users/{user_id}` | Superadmin | Actualiza los datos permitidos del usuario. |
+| `PATCH` | `/api/v1/users/{user_id}/status` | Superadmin | Activa o desactiva un usuario. |
+
+### Inventario y productos
+
+| Método | Endpoint | Acceso | Función |
+| --- | --- | --- | --- |
+| `POST` | `/api/v1/inventario/productos` | Administrador o Panadero | Crea un producto y su inventario inicial. |
+| `PATCH` | `/api/v1/inventario/productos/{id_producto}` | Administrador o Panadero | Actualiza precio o existencias de un producto. |
+| `GET` | `/api/v1/inventario/productos` | Público; JWT opcional | Lista productos; acepta `categoria` y `buscar`. Sin rol gestor, solo muestra productos activos. |
+| `GET` | `/api/v1/inventario/productos/{id_producto}` | Público; JWT opcional | Consulta un producto; sin rol gestor, solo permite consultar productos activos. |
+| `GET` | `/api/v1/inventario/productos/{id_producto}/disponibilidad?cantidad=1` | JWT | Comprueba si hay existencias para la cantidad solicitada. |
+| `POST` | `/api/v1/inventario/movimientos/descuento` | Rol `Sistema` | Descuenta del inventario los productos asociados a un pedido. |
+| `GET` | `/api/v1/inventario/alertas` | Administrador o Panadero | Lista productos con inventario bajo; acepta el parámetro opcional `umbral`. |
+| `DELETE` | `/api/v1/inventario/productos/{id_producto}` | Administrador | Inactiva un producto. |
+
+### Pedidos
+
+| Método | Endpoint | Acceso | Función |
+| --- | --- | --- | --- |
+| `POST` | `/api/v1/orders` | Cliente, Administrador o Superadmin | Crea un pedido. |
+| `GET` | `/api/v1/orders` | JWT | Lista pedidos visibles para el usuario; acepta `estadoPedido`, `filtroTexto`, `page` y `page_size`. |
+| `GET` | `/api/v1/orders/dispatch-queue` | Panadero, Domiciliario o Administrador | Consulta la cola de pedidos para despacho. |
+| `GET` | `/api/v1/orders/history/filter?fechaInicio=AAAA-MM-DD&fechaFin=AAAA-MM-DD` | JWT | Filtra el historial por fechas; acepta también `page` y `page_size`. |
+| `GET` | `/api/v1/orders/{idPedido}` | JWT | Consulta el detalle de un pedido sujeto a los permisos del usuario. |
+| `PATCH` | `/api/v1/orders/{idPedido}/cancel` | Cliente propietario del pedido o Administrador | Cancela un pedido cuando las reglas de negocio lo permiten. |
+| `PATCH` | `/api/v1/orders/{idPedido}/status` | Panadero, Domiciliario o Administrador | Actualiza el estado del pedido, sujeto a las reglas de negocio. |
+| `POST` | `/api/v1/orders/{order_id}/confirm` | Panadero, Administrador o Superadmin | Confirma un pedido pendiente y genera su recibo. |
+
+### Recibos
+
+| Método | Endpoint | Acceso | Función |
+| --- | --- | --- | --- |
+| `GET` | `/api/v1/receipts/` | JWT | Lista recibos visibles; acepta `search`, `page` y `page_size`. |
+| `GET` | `/api/v1/receipts/{receipt_id}` | JWT | Consulta el recibo, el pedido, el cliente y los productos con precios congelados. |
+| `GET` | `/api/v1/receipts/{receipt_id}/pdf` | JWT | Descarga el recibo en PDF. |
+
+En recibos, Cliente solo ve los propios; Domiciliario, los pedidos que tiene asignados; Administrador y Superadmin pueden consultar todos. Panadero puede confirmar pedidos, pero no consultar ni descargar recibos. `search` admite hasta 100 caracteres y `page`/`page_size` deben ser positivos. La fecha de emisión se asigna en el servidor.
 
 ---
 
 ## 🚀 Instalación y ejecución
 
-### Requisitos previos
+Esta guía usa **Git Bash** como terminal principal. Desde la raíz del proyecto, sigue los pasos en orden. Se recomienda Python **3.13**; el proyecto requiere Python 3.12 o superior.
 
-- Python 3.12 o superior
-- MySQL en ejecución, con una base de datos vacía creada para Panify
+### 1. Clonar el repositorio
 
-### Pasos
+```bash
+git clone https://github.com/Panify-HQ/Panify-Backend.git
+cd Panify-Backend
+```
 
-**1. Verificar e instalar Python**
+### 2. Crear y activar el entorno virtual
 
-Se recomienda utilizar **Python 3.13.x** para garantizar una mejor compatibilidad con las dependencias del proyecto.
+En Windows con Git Bash y el lanzador de Python instalado:
 
-Verifica tu versión de Python:
+```bash
+py -3.13 -m venv .venv
+source .venv/Scripts/activate
+```
+
+En Linux o macOS:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Confirma que el entorno está activo y usa la versión esperada:
 
 ```bash
 python --version
 ```
 
-Si tienes varias versiones instaladas, puedes consultar las disponibles con:
+En la terminal activa debe aparecer `(.venv)`. Activa de nuevo el entorno cada vez que abras una terminal para trabajar en el proyecto.
+
+### 3. Instalar dependencias
 
 ```bash
-py --list
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
 
-**Importante:** Si tienes Python 3.15, utiliza Python 3.13 para este proyecto, ya que algunas dependencias podrían no ser compatibles todavía.
+### 4. Crear la base de datos MySQL
 
-**2. Crear el entorno virtual**
+Inicia MySQL y crea una base vacía llamada `panify`. Puedes ejecutar este SQL desde MySQL Workbench (en una pestaña de consulta) o desde tu cliente SQL:
 
-```bash
-py -3.13 -m venv .venv
+```sql
+CREATE DATABASE panify
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
 ```
 
-**3. Activar el entorno virtual**
+### 5. Configurar la conexión y las variables de entorno
+
+Crea tu archivo local a partir de la plantilla:
 
 ```bash
-# Windows (PowerShell)
-.venv\Scripts\Activate.ps1
-
-# Windows (CMD)
-.venv\Scripts\activate.bat
-
-# Linux / macOS
-source .venv/bin/activate
-
-# Git Bash
-source .venv/Scripts/activate
-```
-
-**4. Actualizar las herramientas de instalación**
-
-```bash
-python -m pip install --upgrade pip setuptools wheel
-```
-
-**5. Instalar las librerías**
-
-```bash
-pip install -r requirements.txt
-```
-
-**6. Configurar las variables de entorno**
-
-Copia el archivo de ejemplo y edítalo con tus datos locales:
-
-```bash
-# Windows
-copy .env.example .env
-
-# Linux / macOS
 cp .env.example .env
 ```
 
-**Nota:** Asegúrate de tener el entorno virtual activado antes de instalar las dependencias y ejecutar el proyecto.
+Abre `.env` y configura, como mínimo:
 
-Variables disponibles:
+- `DATABASE_URL`: conexión que usa **la aplicación y Alembic** para acceder a MySQL. Sustituye el usuario y la contraseña por los de tu instalación:
 
-| Variable        | Descripción                     | Ejemplo                                                    |
-| --------------- | ------------------------------- | ---------------------------------------------------------- |
-| `APP_NAME`      | Nombre de la aplicación         | `Panify API`                                               |
-| `APP_ENV`       | Entorno de ejecución            | `development`                                              |
-| `DEBUG`         | Modo depuración                 | `true`                                                     |
-| `API_V1_PREFIX` | Prefijo de la versión de la API | `/api/v1`                                                  |
-| `DATABASE_URL`  | Cadena de conexión a MySQL      | `mysql+pymysql://usuario:contrasena@localhost:3306/panify` |
+  ```text
+  DATABASE_URL=mysql+pymysql://usuario:clave@localhost:3306/panify
+  ```
 
-> ⚠️ El archivo `.env` contiene datos privados y **nunca debe subirse al repositorio**. Si tu contraseña tiene caracteres especiales (`@`, `#`, `/`), debes codificarlos en la URL (por ejemplo, `@` se escribe `%40`).
+#### Autenticación (JWT)
 
-**5. Ejecutar el proyecto**
+Genera una clave secreta y copia el resultado en `.env` como valor de `JWT_SECRET_KEY`:
 
 ```bash
-uvicorn app.main:app --reload
+python -c "import secrets; print(secrets.token_urlsafe(48))"
 ```
 
-**6. Verificar que todo funciona**
+Por ejemplo, reemplaza el valor de ejemplo por `JWT_SECRET_KEY=<clave-generada>`. Esta clave es privada: no la compartas ni la subas a Git.
 
-| Qué                                 | URL                                |
-| ----------------------------------- | ---------------------------------- |
-| El proyecto se ejecuta bajo la URL  | http://127.0.0.1:8000              |
-| Documentación del backend (Swagger) | http://127.0.0.1:8000/docs         |
-| Estado del servidor                 | http://127.0.0.1:8000/health       |
-| Estado de la conexión con MySQL     | http://127.0.0.1:8000/health/ready |
+Si la contraseña de MySQL contiene caracteres especiales como `@`, `#` o `/`, codifícalos para que sean válidos en la URL (por ejemplo, `@` se escribe `%40`). Si usarás la recuperación de contraseña por correo, configura también `SMTP_USER` y `SMTP_PASSWORD` con credenciales SMTP válidas; para Gmail utiliza una contraseña de aplicación.
 
-Si `/health/ready` responde `{"status": "ready", "database": "connected"}`, el backend ya se comunica con MySQL. Si responde con error 503, revisa `DATABASE_URL` y que MySQL esté encendido.
+> **Seguridad:** `.env` contiene credenciales y secretos locales. No lo compartas ni lo subas al repositorio; Git lo ignora. Usa `.env.example` como plantilla, nunca como almacén de credenciales reales.
+
+### 6. Crear las tablas con Alembic
+
+Desde la raíz del repositorio y con el entorno virtual activo, ejecuta:
+
+```bash
+python -m alembic upgrade heads
+```
+
+Se usa `heads` (plural) porque las migraciones actuales tienen más de una rama. Este paso crea y actualiza las tablas, incluidos los roles iniciales necesarios para crear el SuperAdmin.
+
+#### Datos de prueba (opcional)
+
+El [script SQL de datos de prueba](https://github.com/Panify-HQ/Panify-Documentacion/blob/main/docs/04-base-de-datos-y-backend/Script_DDL_DML_MySQL.sql) inserta registros en las tablas existentes; no crea el esquema. Por eso, solo se considera después de aplicar las migraciones y sobre una base local desechable, nunca sobre producción.
+
+**No lo ejecutes directamente todavía:** hay diferencias que deben corregirse en el script para que coincida con el esquema actual del backend:
+
+- La columna de dirección del cliente se llama `direccion` en el backend; el script usa `dirección`.
+- Los productos admiten `ACTIVO`, `INACTIVO` o `AGOTADO`; los pedidos admiten `Pendiente`, `En preparación`, `Listo`, `En camino`, `Entregado` o `Cancelado`. El script usa valores distintos para algunos de esos estados.
+- `fechaHoraEntregaEstimada` es obligatoria en cada pedido y el script no la incluye en sus inserciones.
+- Los hashes de contraseña de ejemplo están incompletos; esos usuarios no podrán iniciar sesión hasta que se sustituyan por hashes válidos.
+- Aunque crea pedidos y detalles, el script no inserta filas en `recibos`; no bastará para probar los endpoints de recibos.
+
+Antes de usarlo, adapta esos datos, confirma que la base seleccionada es `panify` y ejecútalo únicamente en un entorno de pruebas.
+
+### 7. Crear el SuperAdmin
+
+Ejecuta el script interactivo:
+
+```bash
+python -m scripts.create_super_admin
+```
+
+Ingresa nombre, apellido, correo, teléfono y contraseña cuando los solicite. La contraseña se guarda protegida. Si ya existe un SuperAdmin, el script no crea otro. Si informa que falta el rol, comprueba que las migraciones del paso anterior terminaron correctamente y que `.env` apunta a la base `panify` correcta.
+
+### 8. Iniciar el backend
+
+```bash
+python -m uvicorn app.main:app --reload
+```
+
+Deja esa terminal abierta mientras uses la API. `--reload` es útil durante desarrollo; no se recomienda para producción.
+
+### 9. Verificar que el backend y MySQL estén disponibles
+
+Con el servidor en ejecución, abre otra terminal o navegador:
+
+| Comprobación | URL | Resultado esperado |
+| --- | --- | --- |
+| Servidor activo | `http://127.0.0.1:8000/health` | `{"status":"ok","service":"panify-api"}` |
+| Conexión a MySQL | `http://127.0.0.1:8000/health/ready` | `{"status":"ready","database":"connected"}` |
+| Documentación interactiva (Swagger) | `http://127.0.0.1:8000/docs` | Documentación de los endpoints |
+
+También puedes comprobar los health checks desde Git Bash:
+
+```bash
+curl http://127.0.0.1:8000/health
+curl -i http://127.0.0.1:8000/health/ready
+```
+
+La API versionada usa el prefijo `/api/v1`.
+
+### Solución de problemas frecuentes
+
+- **MySQL no disponible o respuesta 503 en `/health/ready`:** confirma que el servicio MySQL está iniciado, que la base `panify` existe y que `DATABASE_URL` tiene el usuario, contraseña, host y puerto correctos.
+- **Error de tabla inexistente:** vuelve a ejecutar `python -m alembic upgrade heads` con el entorno virtual activo y revisa que Alembic use el mismo `.env` y la misma base que la aplicación.
+- **No se envían correos de recuperación:** configura `SMTP_USER` y `SMTP_PASSWORD` en `.env`; en Gmail se requiere una contraseña de aplicación.
+- **No se encuentra el comando `python`:** instala Python 3.12 o superior y verifica que esté disponible en la terminal.
+- **No se encuentra `uvicorn` o `alembic`:** activa `.venv` y vuelve a instalar las dependencias con `python -m pip install -r requirements.txt`.
 
 ### Pruebas
 
 ```bash
-pytest
+python -m pytest
 ```
 
 ---

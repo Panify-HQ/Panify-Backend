@@ -33,12 +33,12 @@ class RutaInventario(APIRoute):
 
 
 router = APIRouter(
-   prefix="/inventory",
+    prefix="/inventory",
     tags=["inventory"],
     route_class=RutaInventario,
 )
 
-ROLES_GESTION = ("Superadmin", "Administrador", "Panadero")
+ROLES_GESTION = ("Administrador", "Panadero")
 
 
 def get_optional_user(
@@ -75,7 +75,9 @@ def es_gestor(usuario: Usuario | None) -> bool:
     )
 
 
-@router.post("/products", status_code=201, response_model=ProductoOut,  summary="Create Product")
+@router.post(
+    "/products", status_code=201, response_model=ProductoOut, summary="Create Product"
+)
 def crear_producto(
     datos: ProductoCrear,
     db: Session = Depends(get_db),
@@ -92,7 +94,9 @@ def crear_producto(
     return a_producto_out(producto)
 
 
-@router.patch("/products/{product_id}", response_model=ProductoOut,  summary="Update Product")
+@router.patch(
+    "/products/{product_id}", response_model=ProductoOut, summary="Update Product"
+)
 def actualizar_producto(
     id_producto: int,
     datos: ProductoActualizar,
@@ -127,7 +131,9 @@ def listar_productos(
     return [a_producto_out(producto) for producto in productos]
 
 
-@router.get("/productos/{product_id}", response_model=ProductoOut,  summary="Get Product")
+@router.get(
+    "/productos/{product_id}", response_model=ProductoOut, summary="Get Product"
+)
 def obtener_producto(
     id_producto: int,
     db: Session = Depends(get_db),
@@ -151,18 +157,20 @@ def validar_disponibilidad(
     return {"disponible": svc.validar_disponibilidad(db, id_producto, cantidad)}
 
 
-@router.post("/movements/stock-deduction",  summary="Deduct Stock")
+@router.post("/movements/stock-deduction", summary="Deduct Stock")
 def descontar_stock(
     datos: DescuentoIn,
     db: Session = Depends(get_db),
-    _=Depends(require_roles("Sistema")),
+    _=Depends(require_roles("Sistema", "Superadmin")),
 ):
     items = [(item.id, item.cantidad) for item in datos.productos]
     svc.descontar_stock(db, datos.idPedido, items)
     return {"idPedido": datos.idPedido, "estado": "Descontado"}
 
 
-@router.get("/alerts", response_model=list[ProductoOut], summary="List Low Stock Alerts")
+@router.get(
+    "/alerts", response_model=list[ProductoOut], summary="List Low Stock Alerts"
+)
 def alertas_stock(
     umbral: int | None = Query(default=None, ge=0),
     db: Session = Depends(get_db),
@@ -171,11 +179,13 @@ def alertas_stock(
     return [a_producto_out(producto) for producto in svc.alertas_stock(db, umbral)]
 
 
-@router.patch("	/products/{product_id}/deactivate", status_code=204, summary="Deactivate Product")
+@router.patch(
+    "	/products/{product_id}/deactivate", status_code=204, summary="Deactivate Product"
+)
 def inactivar_producto(
     id_producto: int,
     db: Session = Depends(get_db),
-   _=Depends(require_roles("Superadmin", "Administrador")),
+    _=Depends(require_roles("Administrador")),
 ):
     svc.inactivar_producto(db, id_producto)
     return Response(status_code=204)

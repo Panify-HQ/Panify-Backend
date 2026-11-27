@@ -171,7 +171,7 @@ def alertas_stock(
     return [a_producto_out(producto) for producto in svc.alertas_stock(db, umbral)]
 
 
-@router.delete("/productos/{id_producto}", status_code=204)
+@router.patch("/productos/{id_producto}/inactivar", status_code=204)
 def inactivar_producto(
     id_producto: int,
     db: Session = Depends(get_db),

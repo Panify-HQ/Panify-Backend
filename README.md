@@ -100,6 +100,8 @@ La API principal usa el prefijo `/api/v1`; los endpoints de salud no tienen ese 
 | `POST` | `/api/v1/auth/forgot-password` | Público | Solicita por correo un código de recuperación. |
 | `POST` | `/api/v1/auth/reset-password` | Público | Valida el código y establece una nueva contraseña. |
 
+La API no expone operaciones `DELETE`; las bajas o desactivaciones se realizan mediante `PATCH` donde corresponda.
+
 ### Usuarios
 
 | Método | Endpoint | Acceso | Función |
@@ -114,14 +116,14 @@ La API principal usa el prefijo `/api/v1`; los endpoints de salud no tienen ese 
 
 | Método | Endpoint | Acceso | Función |
 | --- | --- | --- | --- |
-| `POST` | `/api/v1/inventario/productos` | Administrador o Panadero | Crea un producto y su inventario inicial. |
-| `PATCH` | `/api/v1/inventario/productos/{id_producto}` | Administrador o Panadero | Actualiza precio o existencias de un producto. |
+| `POST` | `/api/v1/inventario/productos` | Administrador, Panadero o Superadmin | Crea un producto y su inventario inicial. |
+| `PATCH` | `/api/v1/inventario/productos/{id_producto}` | Administrador, Panadero o Superadmin | Actualiza precio o existencias de un producto. |
 | `GET` | `/api/v1/inventario/productos` | Público; JWT opcional | Lista productos; acepta `categoria` y `buscar`. Sin rol gestor, solo muestra productos activos. |
 | `GET` | `/api/v1/inventario/productos/{id_producto}` | Público; JWT opcional | Consulta un producto; sin rol gestor, solo permite consultar productos activos. |
 | `GET` | `/api/v1/inventario/productos/{id_producto}/disponibilidad?cantidad=1` | JWT | Comprueba si hay existencias para la cantidad solicitada. |
-| `POST` | `/api/v1/inventario/movimientos/descuento` | Rol `Sistema` | Descuenta del inventario los productos asociados a un pedido. |
-| `GET` | `/api/v1/inventario/alertas` | Administrador o Panadero | Lista productos con inventario bajo; acepta el parámetro opcional `umbral`. |
-| `PATCH` | `/api/v1/inventario/productos/{id_producto}` | Administrador | Inactiva un producto. |
+| `POST` | `/api/v1/inventario/movimientos/descuento` | Rol `Sistema` o Superadmin | Descuenta del inventario los productos asociados a un pedido. |
+| `GET` | `/api/v1/inventario/alertas` | Administrador, Panadero o Superadmin | Lista productos con inventario bajo; acepta el parámetro opcional `umbral`. |
+| `PATCH` | `/api/v1/inventario/productos/{id_producto}` | Administrador o Superadmin | Inactiva un producto. |
 
 ### Pedidos
 
@@ -129,11 +131,11 @@ La API principal usa el prefijo `/api/v1`; los endpoints de salud no tienen ese 
 | --- | --- | --- | --- |
 | `POST` | `/api/v1/orders` | Cliente, Administrador o Superadmin | Crea un pedido. |
 | `GET` | `/api/v1/orders` | JWT | Lista pedidos visibles para el usuario; acepta `estadoPedido`, `filtroTexto`, `page` y `page_size`. |
-| `GET` | `/api/v1/orders/dispatch-queue` | Panadero, Domiciliario o Administrador | Consulta la cola de pedidos para despacho. |
+| `GET` | `/api/v1/orders/dispatch-queue` | Panadero, Domiciliario, Administrador o Superadmin | Consulta la cola de pedidos para despacho. |
 | `GET` | `/api/v1/orders/history/filter?fechaInicio=AAAA-MM-DD&fechaFin=AAAA-MM-DD` | JWT | Filtra el historial por fechas; acepta también `page` y `page_size`. |
 | `GET` | `/api/v1/orders/{idPedido}` | JWT | Consulta el detalle de un pedido sujeto a los permisos del usuario. |
-| `PATCH` | `/api/v1/orders/{idPedido}/cancel` | Cliente propietario del pedido o Administrador | Cancela un pedido cuando las reglas de negocio lo permiten. |
-| `PATCH` | `/api/v1/orders/{idPedido}/status` | Panadero, Domiciliario o Administrador | Actualiza el estado del pedido, sujeto a las reglas de negocio. |
+| `PATCH` | `/api/v1/orders/{idPedido}/cancel` | Cliente propietario del pedido, Administrador o Superadmin | Cancela un pedido cuando las reglas de negocio lo permiten. |
+| `PATCH` | `/api/v1/orders/{idPedido}/status` | Panadero, Domiciliario, Administrador o Superadmin | Actualiza el estado del pedido, sujeto a las reglas de negocio. |
 | `POST` | `/api/v1/orders/{order_id}/confirm` | Panadero, Administrador o Superadmin | Confirma un pedido pendiente y genera su recibo. |
 
 Al crear un pedido, el cuerpo incluye `listaProductos` y `fechaHoraEntregaEstimada`. El Cliente omite `cliente_idCliente`: el backend lo toma de su perfil autenticado. Administrador y Superadmin deben indicar ese campo.

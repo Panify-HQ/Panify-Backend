@@ -13,8 +13,8 @@ class Productos(Base):
     nombre: Mapped[str | None] = mapped_column(String(250), nullable=True)
     precio: Mapped[float | None] = mapped_column(Float, nullable=True)
     estado: Mapped[str | None] = mapped_column(
-        Enum("ACTIVO", "INACTIVO", "AGOTADO"), nullable=True
-    )
+    Enum("Disponible", "INACTIVO", "AGOTADO"), nullable=True
+)
     categoria: Mapped[str | None] = mapped_column(String(250), nullable=True)
     descripcion: Mapped[str | None] = mapped_column(String(250), nullable=True)
 

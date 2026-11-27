@@ -5,7 +5,7 @@ from app.models.inventarios import Inventarios
 from app.models.productos import Productos
 
 
-ESTADO_ACTIVO = "ACTIVO"
+ESTADO_ACTIVO = "Disponible"
 ESTADO_INACTIVO = "INACTIVO"
 ESTADOS_PEDIDO_ACTIVO = ("Pendiente", "En proceso")
 

@@ -24,12 +24,46 @@ class OrderProductCreate(OrderSchema):
 
 
 class OrderCreate(OrderSchema):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "listaProductos": [
+                        {"idProducto": 1, "cantidad": 2},
+                        {"idProducto": 3, "cantidad": 1},
+                    ],
+                    "fechaHoraEntregaEstimada": "2030-05-21T10:00:00",
+                },
+                {
+                    "cliente_idCliente": 12,
+                    "listaProductos": [{"idProducto": 1, "cantidad": 2}],
+                    "fechaHoraEntregaEstimada": "2030-05-21T10:00:00",
+                },
+            ]
+        }
+    )
+
     cliente_idCliente: int | None = Field(default=None, gt=0)
     listaProductos: list[OrderProductCreate]
     fechaHoraEntregaEstimada: datetime
 
 
 class OrderStatusUpdate(OrderSchema):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {"nuevoEstado": "En preparación"},
+                {"nuevoEstado": "Listo"},
+                {
+                    "nuevoEstado": "En camino",
+                    "domiciliario_idDomiciliario": 7,
+                },
+                {"nuevoEstado": "Entregado"},
+                {"nuevoEstado": "Cancelado"},
+            ]
+        }
+    )
+
     nuevoEstado: OrderState
     domiciliario_idDomiciliario: int | None = Field(default=None, gt=0)
 

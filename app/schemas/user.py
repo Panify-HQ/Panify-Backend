@@ -26,6 +26,48 @@ class DomiciliarioPerfilCrear(BaseModel):
 
 
 class UsuarioCrear(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "nombre": "Ana",
+                    "apellido": "García",
+                    "correo": "ana.cliente@example.com",
+                    "contrasena": "PanifyDemo2026!",
+                    "telefono": "3001234567",
+                    "direccion": "Calle 10 #20-30",
+                    "rol": "Cliente",
+                },
+                {
+                    "nombre": "Carlos",
+                    "apellido": "Ramírez",
+                    "correo": "carlos.panadero@example.com",
+                    "contrasena": "PanifyDemo2026!",
+                    "telefono": "3102345678",
+                    "rol": "Panadero",
+                    "perfil_panadero": {"estadoActividad": "En Turno"},
+                },
+                {
+                    "nombre": "Laura",
+                    "apellido": "Pérez",
+                    "correo": "laura.domiciliaria@example.com",
+                    "contrasena": "PanifyDemo2026!",
+                    "telefono": "3203456789",
+                    "rol": "Domiciliario",
+                    "perfil_domiciliario": {"estadoDisponibilidad": "Libre"},
+                },
+                {
+                    "nombre": "Mario",
+                    "apellido": "López",
+                    "correo": "mario.admin@example.com",
+                    "contrasena": "PanifyDemo2026!",
+                    "telefono": "3007654321",
+                    "rol": "Administrador",
+                },
+            ]
+        }
+    )
+
     nombre: str = Field(min_length=2, max_length=45)
     apellido: str = Field(min_length=2, max_length=45)
     correo: EmailStr
@@ -82,6 +124,19 @@ class UsuarioCrear(BaseModel):
 
 
 class UsuarioActualizar(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "nombre": "Ana María",
+                    "correo": "ana.actualizada@example.com",
+                    "telefono": "3001234567",
+                    "direccion": "Carrera 10 #20-30",
+                }
+            ]
+        }
+    )
+
     nombre: str | None = Field(default=None, min_length=2, max_length=45)
     apellido: str | None = Field(default=None, min_length=2, max_length=45)
     correo: EmailStr | None = None
@@ -95,6 +150,10 @@ class UsuarioActualizar(BaseModel):
 
 
 class UsuarioEstadoActualizar(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={"examples": [{"estado": "Activo"}, {"estado": "Inactivo"}]}
+    )
+
     estado: Literal["Activo", "Inactivo"]
 
 

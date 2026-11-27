@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from sqlalchemy.orm import Session
 
 from app.infrastructure.database.session import get_db
@@ -15,11 +15,28 @@ router = APIRouter()
 
 # Solicitud del código
 class SolicitarCodigoRequest(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [{"correo": "ana.cliente@example.com"}]
+        }
+    )
+
     correo: EmailStr
 
 
 # Verificación y cambio de contraseña
 class RestablecerContrasenaRequest(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "correo": "ana.cliente@example.com",
+                    "codigo": "654321",
+                    "nueva_contrasena": "NuevaClave2026!",
+                }
+            ]
+        }
+    )
 
     correo: EmailStr
 

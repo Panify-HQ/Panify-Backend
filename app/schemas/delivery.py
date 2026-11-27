@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from app.schemas.order import OrderState
 
@@ -50,6 +50,10 @@ class DeliveryHistoryResponse(BaseModel):
 
 
 class DeliveryStatusUpdate(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={"examples": [{"estadoPedido": "Entregado"}]}
+    )
+
     estadoPedido: OrderState
 
 

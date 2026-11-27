@@ -41,7 +41,9 @@ class MensajeRespuesta(BaseModel):
 @router.post(
     "/forgot-password",
     response_model=MensajeRespuesta,
-    status_code=status.HTTP_202_ACCEPTED
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="RF-001.3 - Solicitar recuperación de contraseña",
+    operation_id="rf_001_3_solicitar_recuperacion_contrasena",
 )
 def forgot_password(
     datos: SolicitarCodigoRequest,
@@ -76,7 +78,9 @@ def forgot_password(
     }
 @router.post(
     "/reset-password",
-    response_model=MensajeRespuesta
+    response_model=MensajeRespuesta,
+    summary="RF-001.4 - Restablecer contraseña",
+    operation_id="rf_001_4_restablecer_contrasena",
 )
 def reset_password(
     datos: RestablecerContrasenaRequest,

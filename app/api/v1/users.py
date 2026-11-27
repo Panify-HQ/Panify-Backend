@@ -40,6 +40,8 @@ def require_super_admin(
     "/",
     response_model=UsuarioRespuesta,
     status_code=status.HTTP_201_CREATED,
+    summary="RF-001.1 / RF-002.2 - Registrar usuario",
+    operation_id="rf_001_1_rf_002_2_registrar_usuario",
 )
 def registrar_usuario(
     datos: UsuarioCrear,
@@ -104,6 +106,8 @@ def registrar_usuario(
     "/",
     response_model=list[UserResponse],
     dependencies=[Depends(require_super_admin)],
+    summary="RF-002.1 - Consultar y listar usuarios",
+    operation_id="rf_002_1_listar_usuarios",
 )
 def list_users(
     role: UserRole | None = Query(default=None),
@@ -125,6 +129,8 @@ def list_users(
     "/{user_id}",
     response_model=UserResponse,
     dependencies=[Depends(require_super_admin)],
+    summary="RF-002.1 - Consultar usuario por ID",
+    operation_id="rf_002_1_consultar_usuario",
 )
 def get_user(
     user_id: int,
@@ -143,6 +149,8 @@ def get_user(
     "/{user_id}",
     response_model=UserResponse,
     dependencies=[Depends(require_super_admin)],
+    summary="RF-002.3 - Actualizar información de usuario",
+    operation_id="rf_002_3_actualizar_usuario",
 )
 def update_user(
     user_id: int,
@@ -168,7 +176,12 @@ def update_user(
         )
 
 
-@router.patch("/{user_id}/status", response_model=UserResponse)
+@router.patch(
+    "/{user_id}/status",
+    response_model=UserResponse,
+    summary="RF-002.3 - Actualizar estado de usuario",
+    operation_id="rf_002_3_actualizar_estado_usuario",
+)
 def change_user_status(
     user_id: int,
     data: UsuarioEstadoActualizar,

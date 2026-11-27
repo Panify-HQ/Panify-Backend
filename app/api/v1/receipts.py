@@ -42,7 +42,12 @@ def _http_error(error: Exception) -> HTTPException:
     )
 
 
-@router.get("/", response_model=ReceiptListResponse)
+@router.get(
+    "/",
+    response_model=ReceiptListResponse,
+    summary="RF-005.2 - Consultar recibos",
+    operation_id="rf_005_2_consultar_recibos",
+)
 def list_receipts(
     search: str | None = Query(default=None, max_length=100),
     page: int = Query(default=1, ge=1),
@@ -62,7 +67,12 @@ def list_receipts(
         raise _http_error(error) from error
 
 
-@router.get("/{receipt_id}", response_model=ReceiptDetail)
+@router.get(
+    "/{receipt_id}",
+    response_model=ReceiptDetail,
+    summary="RF-005.3 - Consultar detalle del recibo",
+    operation_id="rf_005_3_detalle_recibo",
+)
 def get_receipt(
     receipt_id: int = Path(gt=0),
     db: Session = Depends(get_db),
@@ -74,7 +84,11 @@ def get_receipt(
         raise _http_error(error) from error
 
 
-@router.get("/{receipt_id}/pdf")
+@router.get(
+    "/{receipt_id}/pdf",
+    summary="RF-005.4 - Descargar recibo en PDF",
+    operation_id="rf_005_4_descargar_recibo_pdf",
+)
 def download_receipt_pdf(
     receipt_id: int = Path(gt=0),
     db: Session = Depends(get_db),

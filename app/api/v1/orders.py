@@ -84,6 +84,8 @@ def _raise_database_error(db: Session, error: SQLAlchemyError) -> NoReturn:
     "",
     response_model=OrderCreateResponse,
     status_code=status.HTTP_201_CREATED,
+    summary="RF-004.1 - Crear y registrar pedido",
+    operation_id="rf_004_1_crear_pedido",
 )
 def create_order(
     data: OrderCreate,
@@ -106,7 +108,12 @@ def create_order(
         _raise_database_error(db, error)
 
 
-@router.get("", response_model=OrderListResponse)   
+@router.get(
+    "",
+    response_model=OrderListResponse,
+    summary="RF-004.2 - Consultar historial de pedidos",
+    operation_id="rf_004_2_listar_pedidos",
+)
 def list_orders(
     estadoPedido: OrderState | None = Query(default=None),
     filtroTexto: str | None = Query(default=None, max_length=100),
@@ -130,7 +137,12 @@ def list_orders(
         _raise_database_error(db, error)
 
 
-@router.get("/dispatch-queue", response_model=list[OrderListItem])
+@router.get(
+    "/dispatch-queue",
+    response_model=list[OrderListItem],
+    summary="RF-006.1 - Consultar prioridad de entregas",
+    operation_id="rf_006_1_cola_prioridad_pedidos",
+)
 def get_dispatch_queue(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
@@ -150,7 +162,12 @@ def get_dispatch_queue(
         _raise_database_error(db, error)
 
 
-@router.get("/history/filter", response_model=OrderListResponse)
+@router.get(
+    "/history/filter",
+    response_model=OrderListResponse,
+    summary="RF-004.2 - Filtrar historial de pedidos",
+    operation_id="rf_004_2_filtrar_historial_pedidos",
+)
 def filter_order_history(
     fechaInicio: date,
     fechaFin: date,
@@ -174,7 +191,12 @@ def filter_order_history(
         _raise_database_error(db, error)
 
 
-@router.get("/{idPedido}", response_model=OrderDetailResponse)
+@router.get(
+    "/{idPedido}",
+    response_model=OrderDetailResponse,
+    summary="RF-004.3 - Consultar detalle de pedido",
+    operation_id="rf_004_3_detalle_pedido",
+)
 def get_order_detail(
     idPedido: int = Path(gt=0),
     db: Session = Depends(get_db),
@@ -188,7 +210,12 @@ def get_order_detail(
         _raise_database_error(db, error)
 
 
-@router.patch("/{idPedido}/cancel", response_model=OrderStatusResponse)
+@router.patch(
+    "/{idPedido}/cancel",
+    response_model=OrderStatusResponse,
+    summary="RF-004.4 - Cancelar pedido",
+    operation_id="rf_004_4_cancelar_pedido",
+)
 def cancel_order(
     idPedido: int = Path(gt=0),
     db: Session = Depends(get_db),
@@ -210,7 +237,12 @@ def cancel_order(
         _raise_database_error(db, error)
 
 
-@router.patch("/{idPedido}/status", response_model=OrderStatusResponse)
+@router.patch(
+    "/{idPedido}/status",
+    response_model=OrderStatusResponse,
+    summary="RF-004.5 - Actualizar estado del pedido",
+    operation_id="rf_004_5_actualizar_estado_pedido",
+)
 def update_order_status(
     data: OrderStatusUpdate,
     idPedido: int = Path(gt=0),
@@ -238,6 +270,8 @@ def update_order_status(
     "/{order_id}/confirm",
     response_model=ReceiptCreationResponse,
     status_code=status.HTTP_201_CREATED,
+    summary="RF-005.1 - Generar recibo del pedido",
+    operation_id="rf_005_1_generar_recibo",
 )
 def confirm_order(
     order_id: int = Path(gt=0),

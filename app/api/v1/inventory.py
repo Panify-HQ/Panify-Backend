@@ -76,7 +76,11 @@ def es_gestor(usuario: Usuario | None) -> bool:
 
 
 @router.post(
-    "/products", status_code=201, response_model=ProductoOut, summary="Create Product"
+    "/products",
+    status_code=201,
+    response_model=ProductoOut,
+    summary="RF-003.1 - Registrar producto",
+    operation_id="rf_003_1_registrar_producto",
 )
 def crear_producto(
     datos: ProductoCrear,
@@ -95,7 +99,10 @@ def crear_producto(
 
 
 @router.patch(
-    "/products/{product_id}", response_model=ProductoOut, summary="Update Product"
+    "/products/{product_id}",
+    response_model=ProductoOut,
+    summary="RF-003.2 - Actualizar producto",
+    operation_id="rf_003_2_actualizar_producto",
 )
 def actualizar_producto(
     id_producto: int,
@@ -115,7 +122,12 @@ def actualizar_producto(
     return a_producto_out(producto)
 
 
-@router.get("/products", response_model=list[ProductoOut], summary="List Products")
+@router.get(
+    "/products",
+    response_model=list[ProductoOut],
+    summary="RF-003.4 - Consultar productos",
+    operation_id="rf_003_4_listar_productos",
+)
 def listar_productos(
     categoria: str | None = Query(default=None, max_length=250),
     buscar: str | None = Query(default=None, max_length=250),
@@ -132,7 +144,10 @@ def listar_productos(
 
 
 @router.get(
-    "/productos/{product_id}", response_model=ProductoOut, summary="Get Product"
+    "/productos/{product_id}",
+    response_model=ProductoOut,
+    summary="RF-003.4 - Consultar producto por ID",
+    operation_id="rf_003_4_consultar_producto",
 )
 def obtener_producto(
     id_producto: int,
@@ -147,7 +162,11 @@ def obtener_producto(
     return a_producto_out(producto)
 
 
-@router.get("/products/{product_id}/availability", summary="Check Availability")
+@router.get(
+    "/products/{product_id}/availability",
+    summary="RF-003.5 - Validar disponibilidad de producto",
+    operation_id="rf_003_5_validar_disponibilidad",
+)
 def validar_disponibilidad(
     id_producto: int,
     cantidad: int = Query(gt=0),
@@ -157,7 +176,11 @@ def validar_disponibilidad(
     return {"disponible": svc.validar_disponibilidad(db, id_producto, cantidad)}
 
 
-@router.post("/movements/stock-deduction", summary="Deduct Stock")
+@router.post(
+    "/movements/stock-deduction",
+    summary="RF-003.6 - Control automático de stock",
+    operation_id="rf_003_6_control_automatico_stock",
+)
 def descontar_stock(
     datos: DescuentoIn,
     db: Session = Depends(get_db),
@@ -169,7 +192,10 @@ def descontar_stock(
 
 
 @router.get(
-    "/alerts", response_model=list[ProductoOut], summary="List Low Stock Alerts"
+    "/alerts",
+    response_model=list[ProductoOut],
+    summary="RF-003.7 - Consultar alertas de stock bajo",
+    operation_id="rf_003_7_alertas_stock_bajo",
 )
 def alertas_stock(
     umbral: int | None = Query(default=None, ge=0),
@@ -180,7 +206,10 @@ def alertas_stock(
 
 
 @router.patch(
-    "	/products/{product_id}/deactivate", status_code=204, summary="Deactivate Product"
+    "	/products/{product_id}/deactivate",
+    status_code=204,
+    summary="RF-003.3 - Inactivar producto",
+    operation_id="rf_003_3_inactivar_producto",
 )
 def inactivar_producto(
     id_producto: int,

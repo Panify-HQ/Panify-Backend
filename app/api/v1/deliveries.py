@@ -51,7 +51,12 @@ def _raise_delivery_error(error: DeliveryServiceError) -> NoReturn:
     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from error
 
 
-@router.get("/queue", response_model=DeliveryQueueResponse)
+@router.get(
+    "/queue",
+    response_model=DeliveryQueueResponse,
+    summary="RF-006.1 - Gestionar prioridad de entregas",
+    operation_id="rf_006_1_prioridad_entregas",
+)
 def get_delivery_queue(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(
@@ -73,7 +78,12 @@ def get_delivery_queue(
         ) from error
 
 
-@router.get("/history", response_model=DeliveryHistoryResponse)
+@router.get(
+    "/history",
+    response_model=DeliveryHistoryResponse,
+    summary="RF-006.3 - Filtrar pedidos por fecha",
+    operation_id="rf_006_3_filtrar_pedidos_por_fecha",
+)
 def filter_delivery_history(
     fechaInicio: date,
     fechaFin: date | None = Query(default=None),
@@ -105,7 +115,12 @@ def filter_delivery_history(
         ) from error
 
 
-@router.get("/{idPedido}/details", response_model=DeliveryCustomerResponse)
+@router.get(
+    "/{idPedido}/details",
+    response_model=DeliveryCustomerResponse,
+    summary="RF-006.4 - Visualizar información del cliente",
+    operation_id="rf_006_4_informacion_cliente_pedido",
+)
 def get_order_details(
     idPedido: int = Path(gt=0),
     db: Session = Depends(get_db),
@@ -130,7 +145,12 @@ def get_order_details(
         ) from error
 
 
-@router.patch("/{idPedido}/status", response_model=DeliveryStatusResponse)
+@router.patch(
+    "/{idPedido}/status",
+    response_model=DeliveryStatusResponse,
+    summary="RF-006.2 - Confirmar entrega",
+    operation_id="rf_006_2_confirmar_entrega",
+)
 def update_order_status(
     data: DeliveryStatusUpdate,
     idPedido: int = Path(gt=0),

@@ -52,7 +52,12 @@ def authenticate_user(
     return access_token, expires_in
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post(
+    "/login",
+    response_model=TokenResponse,
+    summary="RF-001.2 - Iniciar sesión",
+    operation_id="rf_001_2_iniciar_sesion",
+)
 def login(data: LoginRequest, db: Session = Depends(get_db)):
     """Autentica al usuario y devuelve un JWT."""
 
@@ -71,7 +76,12 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     return TokenResponse(access_token=access_token, expires_in=expires_in)
 
 
-@router.get("/me", response_model=UserResponse)
+@router.get(
+    "/me",
+    response_model=UserResponse,
+    summary="RF-002.5 - Perfil personal autenticado",
+    operation_id="rf_002_5_perfil_personal",
+)
 def get_my_profile(
     current_user: Usuario = Depends(get_current_user),
 ) -> Usuario:
@@ -80,7 +90,12 @@ def get_my_profile(
     return current_user
 
 
-@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+@router.post(
+    "/logout",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Cerrar sesión",
+    operation_id="cerrar_sesion",
+)
 def logout(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     current_user: Usuario = Depends(get_current_user),
